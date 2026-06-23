@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Orbitron } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
+import PWAInstaller from '@/components/portal/PWAInstaller';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const orbitron = Orbitron({ subsets: ['latin'], variable: '--font-orbitron' });
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
   title: 'FlipTrip Games — Play Free Online Games',
   description: 'Play hundreds of free online games instantly. Action, puzzle, racing, sports and more. No downloads, no sign-up required!',
   keywords: 'free games, online games, browser games, fliptrip, play games, arcade, puzzle games',
+  manifest: '/manifest.json',
   icons: {
     icon: '/fliptrip_favicon.png',
     shortcut: '/fliptrip_favicon.png',
@@ -40,9 +42,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* DNS prefetch for common CDNs */}
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <meta name="theme-color" content="#00d4ff" />
       </head>
       <body className={`${inter.variable} ${orbitron.variable}`}>
         {children}
+        <PWAInstaller />
         <Toaster
           position="top-right"
           toastOptions={{
