@@ -204,6 +204,10 @@ export default class CyberRunnerGameFactory {
       cursors!: any;
       keys!: any;
 
+      // Mobile controls
+      mobileJump!: boolean;
+      mobileSlideTimer!: number;
+
       // Game state variables
       isGameOver!: boolean;
       score!: number;
@@ -277,6 +281,9 @@ export default class CyberRunnerGameFactory {
         this.spawnTimer = 0;
         this.itemSpawnTimer = 0;
         this.speedTrailPoints = [];
+
+        this.mobileJump = false;
+        this.mobileSlideTimer = 0;
 
         if (typeof window !== 'undefined') {
           const savedHigh = localStorage.getItem('cyber_runner_highscore');
@@ -428,6 +435,35 @@ export default class CyberRunnerGameFactory {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys('SPACE,W,S,ENTER,P,ESC');
 
+        // Mobile Touch Swipe & Tap controls
+        let swipeStart: { x: number; y: number } | null = null;
+        this.input.on('pointerdown', (pointer: any) => {
+          getAudioContext();
+          if (this.isGameOver) {
+            this.scene.restart();
+            return;
+          }
+          swipeStart = { x: pointer.x, y: pointer.y };
+        });
+        this.input.on('pointerup', (pointer: any) => {
+          if (!swipeStart || this.isGameOver) return;
+          const dx = pointer.x - swipeStart.x;
+          const dy = pointer.y - swipeStart.y;
+          const adx = Math.abs(dx);
+          const ady = Math.abs(dy);
+          
+          if (adx < 20 && ady < 20) {
+            this.mobileJump = true;
+          } else if (ady > adx) {
+            if (dy > 0) {
+              this.mobileSlideTimer = 350; // Slide for 350ms on swipe down
+            } else {
+              this.mobileJump = true;
+            }
+          }
+          swipeStart = null;
+        });
+
         // Setup Colliders Overlaps
         this.physics.add.overlap(this.player, this.obstacles, this.handleHurdleCollision, undefined, this);
         this.physics.add.overlap(this.player, this.collectibles, this.handleCollectCoin, undefined, this);
@@ -541,15 +577,22 @@ export default class CyberRunnerGameFactory {
 
         // 4. Player Movement Controls and Animations
         const onGround = this.player.body.touching.down;
-        const slidePressed = this.cursors.down.isDown || this.keys.S.isDown;
+        
+        if (this.mobileSlideTimer > 0) {
+          this.mobileSlideTimer -= delta;
+        }
+        
+        const slidePressed = this.cursors.down.isDown || this.keys.S.isDown || (this.mobileSlideTimer > 0);
 
         // Jumping mechanic
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) || 
                             Phaser.Input.Keyboard.JustDown(this.cursors.space) || 
                             Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || 
-                            Phaser.Input.Keyboard.JustDown(this.keys.W);
+                            Phaser.Input.Keyboard.JustDown(this.keys.W) ||
+                            this.mobileJump;
 
         if (jumpPressed && onGround) {
+          this.mobileJump = false; // Reset
           this.player.body.setVelocityY(-650);
           playJumpTone();
         }

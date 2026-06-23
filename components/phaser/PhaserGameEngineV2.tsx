@@ -37,6 +37,54 @@ const GAME_LOADERS: Record<string, () => Promise<any>> = {
 export default function PhaserGameEngine({ gameKey, width = 800, height = 600 }: PhaserGameEngineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (!value) return;
+    const char = value.slice(-1);
+    e.target.value = '';
+
+    const keyCode = char.charCodeAt(0);
+    const keyEventInit = {
+      key: char,
+      code: char === ' ' ? 'Space' : `Key${char.toUpperCase()}`,
+      keyCode: keyCode,
+      which: keyCode,
+      bubbles: true,
+      cancelable: true
+    };
+
+    window.dispatchEvent(new KeyboardEvent('keydown', keyEventInit));
+    window.dispatchEvent(new KeyboardEvent('keyup', keyEventInit));
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const controlKeys = ['Backspace', 'Enter', 'Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape'];
+    if (controlKeys.includes(e.key) || e.key === ' ') {
+      e.preventDefault();
+      const key = e.key === ' ' ? ' ' : e.key;
+      const code = e.key === ' ' ? 'Space' : e.code;
+      const keyEventInit = {
+        key,
+        code,
+        keyCode: e.keyCode,
+        which: e.which,
+        bubbles: true,
+        cancelable: true
+      };
+      window.dispatchEvent(new KeyboardEvent('keydown', keyEventInit));
+      window.dispatchEvent(new KeyboardEvent('keyup', keyEventInit));
+    }
+  };
+
+  const handleContainerClick = () => {
+    if (typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -128,6 +176,7 @@ export default function PhaserGameEngine({ gameKey, width = 800, height = 600 }:
     <div
       ref={containerRef}
       className="phaser-host"
+      onClick={handleContainerClick}
       style={{
         width: '100%',
         height: '100%',
@@ -135,8 +184,30 @@ export default function PhaserGameEngine({ gameKey, width = 800, height = 600 }:
         borderRadius: '12px',
         overflow: 'hidden',
         background: '#08080f',
+        position: 'relative',
       }}
-    />
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        style={{
+          position: 'absolute',
+          top: '-100px',
+          left: '-100px',
+          width: '1px',
+          height: '1px',
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+        onChange={handleInputChange}
+        onKeyDown={handleInputKeyDown}
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
+      />
+    </div>
   );
 }
 

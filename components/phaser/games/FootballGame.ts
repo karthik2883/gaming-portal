@@ -371,6 +371,24 @@ class FootballMatchFactory {
         this.dKey=this.input.keyboard.addKey('D');
         this.spaceKey=this.input.keyboard.addKey('SPACE');
 
+        // Mobile Touch Tap to Kick/Shoot
+        this.input.on('pointerdown', (pointer: any) => {
+          ga();
+          if (this.state === 'GOAL' || this.state === 'GAMEOVER') return;
+          const sp = this.players[this.selectedIdx];
+          if (sp) {
+            const bd = dist(sp.x, sp.y, this.ball.x, this.ball.y);
+            if (bd < P_R + B_R + 55 && sp.kickCd <= 0) {
+              const dx = pointer.x - sp.x;
+              const dy = pointer.y - sp.y;
+              const distVal = Math.sqrt(dx * dx + dy * dy);
+              if (distVal > 0) {
+                this.humanShoot(sp, dx / distVal, dy / distVal);
+              }
+            }
+          }
+        });
+
         this.showCenterMsg('KICK OFF!', `${this.humanTeam.name} vs ${this.cpuTeam.name}`, '#39ff14');
         playWhistle();
       }
@@ -608,6 +626,18 @@ class FootballMatchFactory {
         if(left)  mvx=-1; else if(right) mvx=1;
         if(up)    mvy=-1; else if(down)  mvy=1;
         if(mvx!==0&&mvy!==0){ mvx*=0.707; mvy*=0.707; }
+
+        // Pointer/touch movement support
+        const pointer = this.input.activePointer;
+        if (pointer.isDown && pointer.y > 50) {
+          const dx = pointer.x - sp.x;
+          const dy = pointer.y - sp.y;
+          const distVal = Math.sqrt(dx * dx + dy * dy);
+          if (distVal > 15) {
+            mvx = dx / distVal;
+            mvy = dy / distVal;
+          }
+        }
 
         const spd=245;
         sp.vx=mvx*spd; sp.vy=mvy*spd;

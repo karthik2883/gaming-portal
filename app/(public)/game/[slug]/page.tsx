@@ -330,7 +330,10 @@ export default function GamePlayPage({ params }: { params: { slug: string } }) {
               </div>
 
               {/* Game Area */}
-              <div ref={gameAreaRef} className={styles.gameArea}>
+              <div 
+                ref={gameAreaRef} 
+                className={`${styles.gameArea} ${game.slug === 'bubble-shooter' ? styles.bubbleShooterArea : ''}`}
+              >
                 {game.gameType === 'phaser' ? (
                   <PhaserGameEngine
                     gameKey={game.phaserGameKey || 'snake'}

@@ -334,6 +334,13 @@ export default class BreakoutGameFactory {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.input.keyboard.on('keydown-SPACE', () => this.launch());
 
+        // Touch/Pointer tap to launch the ball
+        this.input.on('pointerdown', () => {
+          if (!this.started && !this.isOver) {
+            this.launch();
+          }
+        });
+
         // World bounds listener for ball bounce sounds (left, right, top edges)
         this.physics.world.on('worldbounds', (body: any, up: boolean, down: boolean, left: boolean, right: boolean) => {
           if (body.gameObject === this.ball) {
@@ -422,11 +429,16 @@ export default class BreakoutGameFactory {
           this.gridGraphics.lineBetween(0, y, W, y);
         }
 
-        // Move paddle strictly with keyboard arrows
+        // Move paddle with keyboard arrows or touch/pointer drag
         if (this.cursors.left.isDown) {
           this.paddle.x = Math.max(100 / 2, this.paddle.x - speed * (delta / 1000));
         } else if (this.cursors.right.isDown) {
           this.paddle.x = Math.min(W - 100 / 2, this.paddle.x + speed * (delta / 1000));
+        } else {
+          const pointer = this.input.activePointer;
+          if (pointer.isDown) {
+            this.paddle.x = Phaser.Math.Clamp(pointer.x, 100 / 2, W - 100 / 2);
+          }
         }
 
         // Sync paddle physics body

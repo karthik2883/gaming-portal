@@ -226,7 +226,8 @@ export default class TwoZeroFourEightGameFactory {
           }
         });
 
-        // Click on game-over or win to restart
+        // Touch Swipe Controls for Mobile
+        let swipeStart: { x: number; y: number } | null = null;
         this.input.on('pointerdown', (pointer: any) => {
           getAudioContext();
           if (this.isOver || this.won) {
@@ -234,7 +235,25 @@ export default class TwoZeroFourEightGameFactory {
             if (pointer.y < 540) {
               this.restartGame();
             }
+            return;
           }
+          swipeStart = { x: pointer.x, y: pointer.y };
+        });
+        this.input.on('pointerup', (pointer: any) => {
+          if (!swipeStart || this.isOver || this.won || this.isAnimating) return;
+          const dx = pointer.x - swipeStart.x;
+          const dy = pointer.y - swipeStart.y;
+          const adx = Math.abs(dx);
+          const ady = Math.abs(dy);
+          
+          if (adx > 25 || ady > 25) {
+            if (adx > ady) {
+              this.handleMove(dx > 0 ? 'R' : 'L');
+            } else {
+              this.handleMove(dy > 0 ? 'D' : 'U');
+            }
+          }
+          swipeStart = null;
         });
       }
 

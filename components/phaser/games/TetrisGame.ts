@@ -242,12 +242,48 @@ export default class TetrisGameFactory {
           }
         });
 
-        // Click restart
-        this.input.on('pointerdown', () => {
+        // Touch Swipe and Tap Controls for Mobile
+        let swipeStart: { x: number; y: number } | null = null;
+        let swipeStartTime = 0;
+        this.input.on('pointerdown', (pointer: any) => {
           getAudioContext();
           if (this.isOver) {
             this.restartGame();
+            return;
           }
+          swipeStart = { x: pointer.x, y: pointer.y };
+          swipeStartTime = this.time.now;
+        });
+        this.input.on('pointerup', (pointer: any) => {
+          if (!swipeStart || this.isOver) return;
+          
+          const dx = pointer.x - swipeStart.x;
+          const dy = pointer.y - swipeStart.y;
+          const adx = Math.abs(dx);
+          const ady = Math.abs(dy);
+          const dt = this.time.now - swipeStartTime;
+          
+          // Tap: short duration and small distance -> Rotate Piece
+          if (dt < 250 && adx < 12 && ady < 12) {
+            this.rotatePiece();
+          } else if (adx > 25 || ady > 25) {
+            if (adx > ady) {
+              if (dx > 0) {
+                this.movePiece(1, 0); // Swipe Right
+              } else {
+                this.movePiece(-1, 0); // Swipe Left
+              }
+            } else {
+              if (dy > 0) {
+                this.movePiece(0, 1); // Swipe Down (Soft Drop)
+                this.score += 1;
+                this.updateHUD();
+              } else {
+                this.hardDrop(); // Swipe Up (Hard Drop)
+              }
+            }
+          }
+          swipeStart = null;
         });
       }
 

@@ -732,11 +732,22 @@ export default class NeonRiderGameFactory {
         const H = this.scale.height;
 
         // 1. Controls processing
-        const accKey = this.cursors.up.isDown || this.keys.W.isDown;
-        const decKey = this.cursors.down.isDown || this.keys.S.isDown;
-        const leftKey = this.cursors.left.isDown || this.keys.A.isDown;
-        const rightKey = this.cursors.right.isDown || this.keys.D.isDown;
+        let accKey = this.cursors.up.isDown || this.keys.W.isDown;
+        let decKey = this.cursors.down.isDown || this.keys.S.isDown;
+        let leftKey = this.cursors.left.isDown || this.keys.A.isDown;
+        let rightKey = this.cursors.right.isDown || this.keys.D.isDown;
         const nitroKey = this.keys.SPACE.isDown;
+
+        const pointer = this.input.activePointer;
+        if (pointer.isDown) {
+          accKey = true; // Auto accelerate on touch
+          const center = W / 2;
+          if (pointer.x < center - 30) {
+            leftKey = true;
+          } else if (pointer.x > center + 30) {
+            rightKey = true;
+          }
+        }
 
         // Acceleration controls
         if (accKey) {
@@ -1088,8 +1099,9 @@ export default class NeonRiderGameFactory {
 
         // Steering tilt skew factor
         let tilt = 0;
-        if (this.cursors.left.isDown || this.keys.A.isDown) tilt = -5;
-        if (this.cursors.right.isDown || this.keys.D.isDown) tilt = 5;
+        const pointer = this.input.activePointer;
+        if (this.cursors.left.isDown || this.keys.A.isDown || (pointer.isDown && pointer.x < W / 2 - 30)) tilt = -5;
+        if (this.cursors.right.isDown || this.keys.D.isDown || (pointer.isDown && pointer.x > W / 2 + 30)) tilt = 5;
 
         // Player vector car geometry
         // Main wedge body

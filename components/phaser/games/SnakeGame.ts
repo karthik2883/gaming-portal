@@ -97,6 +97,40 @@ export default class SnakeGameFactory {
             case 'Space': if (this.isOver) this.scene.restart(); break;
           }
         });
+
+        // Touch Swipe controls for Mobile
+        let swipeStart: { x: number; y: number } | null = null;
+        this.input.on('pointerdown', (pointer: any) => {
+          if (this.isOver) {
+            this.scene.restart();
+            return;
+          }
+          swipeStart = { x: pointer.x, y: pointer.y };
+        });
+        this.input.on('pointerup', (pointer: any) => {
+          if (!swipeStart || this.isOver) return;
+          const dx = pointer.x - swipeStart.x;
+          const dy = pointer.y - swipeStart.y;
+          const adx = Math.abs(dx);
+          const ady = Math.abs(dy);
+          
+          if (adx > 25 || ady > 25) {
+            if (adx > ady) {
+              if (dx > 0) {
+                if (this.direction.x !== -1) this.nextDir = { x: 1, y: 0 };
+              } else {
+                if (this.direction.x !== 1) this.nextDir = { x: -1, y: 0 };
+              }
+            } else {
+              if (dy > 0) {
+                if (this.direction.y !== -1) this.nextDir = { x: 0, y: 1 };
+              } else {
+                if (this.direction.y !== 1) this.nextDir = { x: 0, y: -1 };
+              }
+            }
+          }
+          swipeStart = null;
+        });
       }
 
       addSeg(x: number, y: number) {

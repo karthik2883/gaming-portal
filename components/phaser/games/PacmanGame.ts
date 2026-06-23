@@ -312,12 +312,39 @@ export default class PacmanGameFactory {
           }
         });
 
-        // Pointer click restart binding
-        this.input.on('pointerdown', () => {
+        // Touch Swipe Controls for Mobile
+        let swipeStart: { x: number; y: number } | null = null;
+        this.input.on('pointerdown', (p: any) => {
           getAudioContext();
           if (this.isOver) {
             this.restartGame();
+            return;
           }
+          swipeStart = { x: p.x, y: p.y };
+        });
+        this.input.on('pointerup', (p: any) => {
+          if (!swipeStart || this.won || this.isOver) return;
+          const dx = p.x - swipeStart.x;
+          const dy = p.y - swipeStart.y;
+          const adx = Math.abs(dx);
+          const ady = Math.abs(dy);
+          
+          if (adx > 25 || ady > 25) {
+            if (adx > ady) {
+              if (dx > 0) {
+                this.pacman.ndx = 1; this.pacman.ndy = 0; // Swipe Right
+              } else {
+                this.pacman.ndx = -1; this.pacman.ndy = 0; // Swipe Left
+              }
+            } else {
+              if (dy > 0) {
+                this.pacman.ndx = 0; this.pacman.ndy = 1; // Swipe Down
+              } else {
+                this.pacman.ndx = 0; this.pacman.ndy = -1; // Swipe Up
+              }
+            }
+          }
+          swipeStart = null;
         });
       }
 
