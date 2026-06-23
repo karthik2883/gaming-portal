@@ -345,7 +345,7 @@ async function seed() {
       tags: ['football', 'soccer', 'sports', 'phaser'],
       gameType: 'phaser',
       phaserGameKey: 'football',
-      width: 600, height: 500,
+      width: 800, height: 600,
       featured: true, isActive: true, playCount: 4100, rating: 4.6, sortOrder: 18,
       developer: 'FlipTrip Games',
       instructions: 'Click and drag to aim your shot. The direction and speed of your drag determines ball trajectory. Curve shots around defenders! Score as many goals as possible in the time limit.',
