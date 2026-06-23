@@ -1,0 +1,92 @@
+.card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.adList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.adItem {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-sm);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: all var(--transition-fast);
+}
+
+.adItem:hover {
+  border-color: var(--border-glow);
+  background: var(--bg-card-hover);
+}
+
+.adDetails {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.adIcon {
+  font-size: 2rem;
+  background: var(--bg-card-hover);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.adMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adTitle {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.adDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.adPositionBadge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.adActions {
+  display: flex;
+  gap: 8px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

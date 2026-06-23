@@ -1,0 +1,303 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #070718;
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
+
+/* Animated background glows */
+.bgGlow1 {
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  top: -250px;
+  left: -250px;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.07) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatGlow 6s ease-in-out infinite;
+}
+
+.bgGlow2 {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  bottom: -200px;
+  right: -200px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.07) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatGlow 7s ease-in-out infinite reverse;
+}
+
+/* Subtle dot grid */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0, 212, 255, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+
+@keyframes floatGlow {
+  0%, 100% { opacity: 0.5; transform: scale(1) translate(0, 0); }
+  50%       { opacity: 0.9; transform: scale(1.06) translate(12px, -12px); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-8px); }
+  30%      { transform: translateX(7px); }
+  45%      { transform: translateX(-5px); }
+  60%      { transform: translateX(4px); }
+  75%      { transform: translateX(-2px); }
+}
+
+/* Card */
+.card {
+  background: linear-gradient(145deg, rgba(14, 14, 40, 0.98), rgba(10, 10, 30, 0.98));
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  border-radius: 20px;
+  padding: 48px 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 0 0 1px rgba(0, 212, 255, 0.05),
+    0 20px 60px rgba(0, 0, 0, 0.7),
+    0 0 80px rgba(0, 212, 255, 0.04) inset;
+}
+
+.card.shake {
+  animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Gradient accent bar at top */
+.accentBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #00d4ff 30%, #7c3aed 70%, transparent 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+/* Logo */
+.logoWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.logoIcon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 0 14px #00d4ff);
+}
+
+.logoText {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #f0f0ff;
+}
+
+.logoAccent {
+  color: #00d4ff;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.subtitle {
+  text-align: center;
+  color: #445577;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+
+/* Locked banner */
+.lockedBanner {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  padding: 14px 16px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Error box */
+.errorBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 0.84rem;
+  color: #fca5a5;
+  line-height: 1.45;
+}
+
+.errorIcon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  margin-top: 1px;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7799bb;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(0, 212, 255, 0.15);
+  border-radius: 10px;
+  color: #f0f0ff;
+  font-family: 'Inter', monospace, sans-serif;
+  font-size: 0.95rem;
+  padding: 13px 44px 13px 40px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.input::placeholder {
+  color: #334455;
+}
+
+.input:focus {
+  border-color: rgba(0, 212, 255, 0.55);
+  background: rgba(0, 212, 255, 0.04);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.08);
+}
+
+.input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Show/hide password toggle */
+.eyeBtn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  color: #556677;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.eyeBtn:hover { color: #00d4ff; }
+
+/* Submit button */
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.18), rgba(124, 58, 237, 0.18));
+  border: 1.5px solid rgba(0, 212, 255, 0.4);
+  border-radius: 10px;
+  color: #00d4ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  margin-top: 4px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.28), rgba(124, 58, 237, 0.28));
+  border-color: rgba(0, 212, 255, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 212, 255, 0.18);
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 212, 255, 0.25);
+  border-top-color: #00d4ff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Secure note */
+.secureNote {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 0.72rem;
+  color: #2a3a4a;
+  letter-spacing: 0.04em;
+}

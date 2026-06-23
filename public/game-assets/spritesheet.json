@@ -1,0 +1,68 @@
+{
+  "textures": [
+    {
+      "image": "spritesheet.png",
+      "format": "RGBA8888",
+      "size": { "w": 1024, "h": 558 },
+      "scale": 1,
+      "frames": [
+        {
+          "filename": "ground_track",
+          "frame": { "x": 56, "y": 39, "w": 435, "h": 168 },
+          "rotated": false,
+          "trimmed": false,
+          "spriteSourceSize": { "x": 0, "y": 0, "w": 435, "h": 168 },
+          "sourceSize": { "w": 435, "h": 168 }
+        },
+        {
+          "filename": "static_hurdle",
+          "frame": { "x": 555, "y": 39, "w": 173, "h": 168 },
+          "rotated": false,
+          "trimmed": false,
+          "spriteSourceSize": { "x": 0, "y": 0, "w": 173, "h": 168 },
+          "sourceSize": { "w": 173, "h": 168 }
+        },
+        {
+          "filename": "low_hurdle",
+          "frame": { "x": 773, "y": 65, "w": 192, "h": 142 },
+          "rotated": false,
+          "trimmed": false,
+          "spriteSourceSize": { "x": 0, "y": 0, "w": 192, "h": 142 },
+          "sourceSize": { "w": 192, "h": 142 }
+        },
+        {
+          "filename": "powerup_speed",
+          "frame": { "x": 64, "y": 307, "w": 147, "h": 137 },
+          "rotated": false,
+          "trimmed": false,
+          "spriteSourceSize": { "x": 0, "y": 0, "w": 147, "h": 137 },
+          "sourceSize": { "w": 147, "h": 137 }
+        },
+        {
+          "filename": "powerup_shield",
+          "frame": { "x": 277, "y": 307, "w": 144, "h": 137 },
+          "rotated": false,
+          "trimmed": false,
+          "spriteSourceSize": { "x": 0, "y": 0, "w": 144, "h": 137 },
+          "sourceSize": { "w": 144, "h": 137 }
+        },
+        {
+          "filename": "collectible_coins",
+          "frame": { "x": 496, "y": 289, "w": 240, "h": 155 },
+          "rotated": false,
+          "trimmed": false,
+          "spriteSourceSize": { "x": 0, "y": 0, "w": 240, "h": 155 },
+          "sourceSize": { "w": 240, "h": 155 }
+        },
+        {
+          "filename": "multiplier_chest",
+          "frame": { "x": 781, "y": 284, "w": 181, "h": 173 },
+          "rotated": false,
+          "trimmed": false,
+          "spriteSourceSize": { "x": 0, "y": 0, "w": 181, "h": 173 },
+          "sourceSize": { "w": 181, "h": 173 }
+        }
+      ]
+    }
+  ]
+}
