@@ -1,4 +1,9 @@
 import mongoose from 'mongoose';
+import { webcrypto } from 'crypto';
+
+if (typeof globalThis.crypto === 'undefined') {
+  (globalThis as any).crypto = webcrypto;
+}
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 

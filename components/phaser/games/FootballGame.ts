@@ -76,7 +76,7 @@ const TEAMS: FTeam[] = [
 function drawFlag(ctx: CanvasRenderingContext2D, id: string, x: number, y: number, w: number, h: number) {
   ctx.save();
   ctx.beginPath();
-  const r = 4;
+  const r = 5;
   ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
   ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
   ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
@@ -130,8 +130,16 @@ function drawFlag(ctx: CanvasRenderingContext2D, id: string, x: number, y: numbe
     default:
       fn('#888888',x,y,w,h);
   }
-  // Border
-  ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1; ctx.strokeRect(x,y,w,h);
+  ctx.restore();
+
+  // Border (drawn rounded after restore to avoid clipping corners)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.5; ctx.stroke();
   ctx.restore();
 }
 
@@ -197,20 +205,20 @@ class FootballSelectFactory {
         deco.strokeRect(W-80,H/2-80,80,160);
 
         // Title
-        this.add.text(W/2,28,'⚽  FIFA FOOTBALL NEO',{
+        this.add.text(W/2,30,'⚽  FIFA FOOTBALL NEO',{
           fontFamily:'Orbitron,monospace',fontSize:'28px',
           color:'#39ff14',fontWeight:'bold'
         }).setOrigin(0.5).setShadow(0,0,'#39ff14',14,true,true);
 
-        this.add.text(W/2,64,'SELECT YOUR NATIONAL TEAM',{
+        this.add.text(W/2,58,'SELECT YOUR NATIONAL TEAM',{
           fontFamily:'Orbitron,monospace',fontSize:'12px',color:'#6baa6b',letterSpacing:3
         }).setOrigin(0.5);
 
         // Grid: 4 cols × 4 rows
-        const cols=4, cardW=170, cardH=116, padX=14, padY=10;
+        const cols=4, cardW=160, cardH=100, padX=14, padY=10;
         const totalW=cols*(cardW+padX)-padX;
         const startX=(W-totalW)/2+cardW/2;
-        const startY=90;
+        const startY=120;
 
         TEAMS.forEach((team,i) => {
           const col=i%cols, row=Math.floor(i/cols);
@@ -229,16 +237,16 @@ class FootballSelectFactory {
 
           // Flag texture (canvas-drawn)
           const flagKey=`flag_${team.id}`;
-          const flagW=cardW-20, flagH=50;
+          const flagW=cardW-24, flagH=44;
           if(!this.textures.exists(flagKey)){
             const ct=this.textures.createCanvas(flagKey,flagW,flagH);
             drawFlag(ct.context,team.id,0,0,flagW,flagH);
             ct.refresh();
           }
-          this.add.image(cx,cy-18,flagKey);
+          this.add.image(cx,cy-16,flagKey);
 
           // Country name
-          this.add.text(cx,cy+15,team.name,{
+          this.add.text(cx,cy+16,team.name,{
             fontFamily:'Orbitron,monospace',fontSize:'10.5px',
             color:'#c0ffc0',fontWeight:'bold'
           }).setOrigin(0.5);
@@ -264,7 +272,7 @@ class FootballSelectFactory {
         });
 
         // Bottom guide
-        this.add.text(W/2,H-16,
+        this.add.text(W/2,H-26,
           '⬅ Arrow / WASD to move   •   SPACE to shoot   •   Nearest player auto-selects',{
           fontFamily:'monospace',fontSize:'10px',color:'#2a5a2a'
         }).setOrigin(0.5);
@@ -342,9 +350,9 @@ class FootballMatchFactory {
         // HUD bar
         this.hudBg=this.add.graphics();
         this.hudBg.fillStyle(0x000000,0.65);
-        this.hudBg.fillRoundedRect(0,0,W,48,0);
+        this.hudBg.fillRoundedRect(0,0,W,54,0);
 
-        this.hudText=this.add.text(W/2,24,'',{
+        this.hudText=this.add.text(W/2,27,'',{
           fontFamily:'Orbitron,monospace',fontSize:'17px',
           color:'#ffffff',fontWeight:'bold',align:'center'
         }).setOrigin(0.5).setDepth(10);
@@ -389,6 +397,7 @@ class FootballMatchFactory {
           }
         });
 
+        this.updateHUD();
         this.showCenterMsg('KICK OFF!', `${this.humanTeam.name} vs ${this.cpuTeam.name}`, '#39ff14');
         playWhistle();
       }
@@ -452,26 +461,35 @@ class FootballMatchFactory {
         const g=this.pitchGfx; g.clear();
         const PW=PR-PL, PH2=PB-PT;
 
-        // Green field with zebra stripes
-        g.fillStyle(0x1a6b35,1); g.fillRoundedRect(PL,PT,PW,PH2,5);
+        // Cyberpunk dark green field with stripes
+        g.fillStyle(0x051a0c,1); g.fillRoundedRect(PL,PT,PW,PH2,5);
         const sh=46;
-        for(let y=PT;y<PB;y+=sh*2){ g.fillStyle(0x1e7840,0.45); g.fillRect(PL,y,PW,sh); }
+        for(let y=PT;y<PB;y+=sh*2){ g.fillStyle(0x092612,0.5); g.fillRect(PL,y,PW,sh); }
 
-        // White markings
-        g.lineStyle(2,0xffffff,0.88);
+        // Glowing neon markings
+        g.lineStyle(2,0x39ff14,0.85);
 
-        // Boundary
-        g.strokeRect(PL,PT,PW,PH2);
+        // Boundary lines with open goal mouths
+        g.lineBetween(PL,PT,PR,PT); // Top
+        g.lineBetween(PL,PB,PR,PB); // Bottom
+        
+        // Left boundary (goal mouth open)
+        g.lineBetween(PL,PT,PL,GY1);
+        g.lineBetween(PL,GY2,PL,PB);
+        
+        // Right boundary (goal mouth open)
+        g.lineBetween(PR,PT,PR,GY1);
+        g.lineBetween(PR,GY2,PR,PB);
 
         // Halfway line
         g.lineBetween(CX,PT,CX,PB);
 
         // Center circle + spot
         g.strokeCircle(CX,CY,55);
-        g.fillStyle(0xffffff,0.88); g.fillCircle(CX,CY,4);
+        g.fillStyle(0x39ff14,0.85); g.fillCircle(CX,CY,4);
 
         // Penalty areas
-        const paW=100,paH=198; g.lineStyle(2,0xffffff,0.7);
+        const paW=100,paH=198; g.lineStyle(2,0x39ff14,0.7);
         g.strokeRect(PL,CY-paH/2,paW,paH);
         g.strokeRect(PR-paW,CY-paH/2,paW,paH);
 
@@ -481,43 +499,50 @@ class FootballMatchFactory {
         g.strokeRect(PR-gaW,CY-gaH/2,gaW,gaH);
 
         // Penalty spots
-        g.fillStyle(0xffffff,0.7);
+        g.fillStyle(0x39ff14,0.7);
         g.fillCircle(PL+65,CY,3); g.fillCircle(PR-65,CY,3);
 
         // Corner arcs
         [[PL,PT],[PR,PT],[PL,PB],[PR,PB]].forEach(([cx,cy2])=>{
-          g.fillStyle(0xffffff,0.4); g.fillCircle(cx,cy2,3);
+          g.fillStyle(0x39ff14,0.4); g.fillCircle(cx,cy2,3);
         });
 
+        // Goal lines (drawn thin and semi-transparent across the mouth)
+        g.lineStyle(1.5,0x39ff14,0.4);
+        g.lineBetween(PL,GY1,PL,GY2);
+        g.lineBetween(PR,GY1,PR,GY2);
+
         // ── Left Goal (Human) ──
-        // Net fill
-        g.fillStyle(0xffffff,0.06); g.fillRect(PL-GD,GY1,GD,GOAL_H2*2);
+        // Net fill (cyan glow)
+        g.fillStyle(0x00ffff,0.06); g.fillRect(PL-GD,GY1,GD,GOAL_H2*2);
         // Posts
-        g.lineStyle(3.5,0xffffff,1);
+        g.lineStyle(3.5,0x00ffff,1);
         g.lineBetween(PL,GY1,PL-GD,GY1);
         g.lineBetween(PL,GY2,PL-GD,GY2);
         g.lineBetween(PL-GD,GY1,PL-GD,GY2);
         // Net grid
-        g.lineStyle(1,0xcccccc,0.22);
+        g.lineStyle(1,0x00ffff,0.22);
         for(let nx=PL-GD+7;nx<PL;nx+=7) g.lineBetween(nx,GY1,nx,GY2);
         for(let ny=GY1+9;ny<GY2;ny+=9) g.lineBetween(PL-GD,ny,PL,ny);
 
         // ── Right Goal (CPU) ──
-        g.fillStyle(0xffffff,0.06); g.fillRect(PR,GY1,GD,GOAL_H2*2);
-        g.lineStyle(3.5,0xffffff,1);
+        // Net fill (cyan glow)
+        g.fillStyle(0x00ffff,0.06); g.fillRect(PR,GY1,GD,GOAL_H2*2);
+        g.lineStyle(3.5,0x00ffff,1);
         g.lineBetween(PR,GY1,PR+GD,GY1);
         g.lineBetween(PR,GY2,PR+GD,GY2);
         g.lineBetween(PR+GD,GY1,PR+GD,GY2);
-        g.lineStyle(1,0xcccccc,0.22);
+        // Net grid
+        g.lineStyle(1,0x00ffff,0.22);
         for(let nx=PR+7;nx<PR+GD;nx+=7) g.lineBetween(nx,GY1,nx,GY2);
         for(let ny=GY1+9;ny<GY2;ny+=9) g.lineBetween(PR,ny,PR+GD,ny);
 
         // Team name labels on sides
         this.add.text(PL+5,PT+5,this.humanTeam.name,{
-          fontFamily:'Orbitron,monospace',fontSize:'10px',color:'rgba(255,255,255,0.6)',fontWeight:'bold'
+          fontFamily:'Orbitron,monospace',fontSize:'10px',color:'rgba(57,255,20,0.6)',fontWeight:'bold'
         });
         this.add.text(PR-5,PT+5,this.cpuTeam.name,{
-          fontFamily:'Orbitron,monospace',fontSize:'10px',color:'rgba(255,255,255,0.6)',fontWeight:'bold'
+          fontFamily:'Orbitron,monospace',fontSize:'10px',color:'rgba(57,255,20,0.6)',fontWeight:'bold'
         }).setOrigin(1,0);
       }
 
