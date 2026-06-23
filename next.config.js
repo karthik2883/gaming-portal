@@ -13,8 +13,6 @@ const nextConfig = {
     contentDispositionType: 'attachment',
   },
 
-  outputFileTracing: false,
-
   // Compress responses with gzip / brotli
   compress: true,
 
