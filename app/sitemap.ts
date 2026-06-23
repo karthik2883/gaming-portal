@@ -4,7 +4,7 @@ import Game from '@/lib/models/Game';
 import Category from '@/lib/models/Category';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.fliptripgames.com';
   
   await connectDB();
   

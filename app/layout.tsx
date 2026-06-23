@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const orbitron = Orbitron({ subsets: ['latin'], variable: '--font-orbitron' });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.fliptripgames.com'),
   title: 'FlipTrip Games — Play Free Online Games',
   description: 'Play hundreds of free online games instantly. Action, puzzle, racing, sports and more. No downloads, no sign-up required!',
   keywords: 'free games, online games, browser games, fliptrip, play games, arcade, puzzle games',
