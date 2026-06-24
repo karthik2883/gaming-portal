@@ -31,9 +31,31 @@ async function getCategoryData(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await getCategoryData(params.category);
+  const title = category ? `${category.name} Games — FlipTrip Games` : 'Category — FlipTrip Games';
+  const description = category?.description || `Play free ${params.category} games online. No downloads required!`;
   return {
-    title: category ? `${category.name} Games — FlipTrip Games` : 'Category — FlipTrip Games',
-    description: category?.description || `Play free ${params.category} games online.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://www.fliptripgames.com/${params.category}`,
+      type: 'website',
+      images: [
+        {
+          url: '/fliptrip_logo.png',
+          width: 1024,
+          height: 1024,
+          alt: category?.name || 'FlipTrip Games',
+        }
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/fliptrip_logo.png'],
+    },
   };
 }
 

@@ -15,6 +15,26 @@ export const revalidate = 30;
 export const metadata: Metadata = {
   title: 'FlipTrip Games — Play Free Online Games Instantly',
   description: 'Discover and play hundreds of free online games. Action, puzzle, racing, sports, and more. No downloads needed!',
+  openGraph: {
+    title: 'FlipTrip Games — Play Free Online Games Instantly',
+    description: 'Discover and play hundreds of free online games. Action, puzzle, racing, sports, and more. No downloads needed!',
+    url: 'https://www.fliptripgames.com',
+    type: 'website',
+    images: [
+      {
+        url: '/fliptrip_logo.png',
+        width: 1024,
+        height: 1024,
+        alt: 'FlipTrip Games',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FlipTrip Games — Play Free Online Games Instantly',
+    description: 'Discover and play hundreds of free online games. Action, puzzle, racing, sports, and more. No downloads needed!',
+    images: ['/fliptrip_logo.png'],
+  },
 };
 
 interface GridItem {
