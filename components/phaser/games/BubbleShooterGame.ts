@@ -28,13 +28,13 @@ const BS_BR      = 16;          // bubble radius
 const BS_COLS    = 10;
 const BS_ROWS    = 22;
 const BS_ROW_H   = 28;          // hex-row spacing
-const BS_OX      = 140;         // board left edge
+const BS_OX      = 80;          // board left edge
 const BS_PW      = BS_COLS * BS_BD;   // 320
 const BS_OY      = 52;          // board top (ceiling)
-const BS_LW      = BS_OX + BS_BR;    // 156  left wall
-const BS_RW      = BS_OX + BS_PW - BS_BR; // 444  right wall
+const BS_LW      = BS_OX + BS_BR;    // 96   left wall
+const BS_RW      = BS_OX + BS_PW - BS_BR; // 384  right wall
 const BS_DANG    = 458;         // danger line
-const BS_LX      = BS_OX + BS_PW / 2; // 300  launcher x
+const BS_LX      = BS_OX + BS_PW / 2; // 240  launcher x
 const BS_LY      = 536;         // launcher y
 const BS_STEP    = 4;           // px per physics micro-step
 const BS_SUBSTEP = 3;           // micro-steps per frame
@@ -74,6 +74,8 @@ export default class BubbleShooterGameFactory {
       socketsGfx: any;
       launcherGfx: any;
       scoreTxt: any;
+      dangerGfx: any;
+      trailEmitter: any;
       hiTxt: any;
       lvlTxt: any;
       shotsTxt: any;
@@ -115,6 +117,8 @@ export default class BubbleShooterGameFactory {
         this.rowsShifted = 0;
         this.launcherRecoil = 0;
         this.gridTimer = 0;
+        this.dangerGfx = null;
+        this.trailEmitter = null;
       }
 
       // ── init (called before create on every start/restart) ────────────────
@@ -134,6 +138,8 @@ export default class BubbleShooterGameFactory {
         this.rowsShifted = 0;
         this.launcherRecoil = 0;
         this.gridTimer = 0;
+        this.dangerGfx = null;
+        this.trailEmitter = null;
         try {
           const stored = typeof window !== 'undefined' ? window.localStorage.getItem('bsHi') : null;
           if (stored) this.hi = parseInt(stored, 10) || 0;
@@ -145,13 +151,24 @@ export default class BubbleShooterGameFactory {
         // background
         const bg = this.add.graphics();
         bg.fillGradientStyle(0x02020a, 0x02020a, 0x050512, 0x050512, 1);
-        bg.fillRect(0, 0, 600, 600);
+        bg.fillRect(0, 0, 480, 600);
+
+        // Ambient glowing background behind the board
+        const ambientGlow = this.add.graphics();
+        ambientGlow.fillStyle(0x00f3ff, 0.03); // super soft cyan glow
+        ambientGlow.fillCircle(BS_LX, BS_OY + 100, 150);
+        ambientGlow.fillStyle(0xbd00ff, 0.02); // super soft magenta/purple glow
+        ambientGlow.fillCircle(BS_LX, BS_DANG, 180);
 
         // build bubble textures
         this.buildTextures();
 
         // board frame + static labels
         this.drawFrame();
+
+        // danger line graphics
+        this.dangerGfx = this.add.graphics().setDepth(4);
+        this.drawDangerLine();
 
         // sockets graphics (drawn behind bubbles)
         this.socketsGfx = this.add.graphics().setDepth(1);
@@ -303,12 +320,6 @@ export default class BubbleShooterGameFactory {
         g.lineTo(BS_OX + BS_PW + margin - bracketSize, boardBottom + margin);
         g.stroke();
 
-        // danger line
-        g.lineStyle(5, 0xff0055, 0.2); // outer glow
-        g.lineBetween(BS_OX, BS_DANG, BS_OX + BS_PW, BS_DANG);
-        g.lineStyle(1.5, 0xff0055, 0.9); // core line
-        g.lineBetween(BS_OX, BS_DANG, BS_OX + BS_PW, BS_DANG);
-
         // title
         const title = this.add.text(BS_LX, 20, 'BUBBLE  NEON', {
           fontFamily: 'Orbitron, monospace',
@@ -330,6 +341,15 @@ export default class BubbleShooterGameFactory {
         danger.setShadow(0, 0, '#ff0055', 8, true, true);
       }
 
+      drawDangerLine() {
+        if (!this.dangerGfx) return;
+        this.dangerGfx.clear();
+        this.dangerGfx.lineStyle(5, 0xff0055, 0.35); // outer glow
+        this.dangerGfx.lineBetween(BS_OX, BS_DANG, BS_OX + BS_PW, BS_DANG);
+        this.dangerGfx.lineStyle(1.5, 0xff0055, 1.0); // core line
+        this.dangerGfx.lineBetween(BS_OX, BS_DANG, BS_OX + BS_PW, BS_DANG);
+      }
+
       // ── draw grid socket positions ─────────────────────────────────────────
       drawSockets() {
         if (!this.socketsGfx) return;
@@ -346,12 +366,12 @@ export default class BubbleShooterGameFactory {
 
       // ── HUD ───────────────────────────────────────────────────────────────
       buildHUD() {
-        const rx = BS_OX + BS_PW + 14;  // 474
+        const rx = BS_OX + BS_PW + 8;  // 408
         const labelStyle  = { fontFamily: 'monospace', fontSize: '10px', color: '#63638b', fontStyle: 'bold' };
-        const valueStyle  = { fontFamily: 'Orbitron, monospace', fontSize: '20px', color: '#00f3ff', fontStyle: 'bold' };
-        const valueStyle2 = { fontFamily: 'Orbitron, monospace', fontSize: '20px', color: '#ffea00', fontStyle: 'bold' };
-        const valueStyle3 = { fontFamily: 'Orbitron, monospace', fontSize: '20px', color: '#39ff14', fontStyle: 'bold' };
-        const valueStyle4 = { fontFamily: 'Orbitron, monospace', fontSize: '20px', color: '#ff0055', fontStyle: 'bold' };
+        const valueStyle  = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#00f3ff', fontStyle: 'bold' };
+        const valueStyle2 = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#ffea00', fontStyle: 'bold' };
+        const valueStyle3 = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#39ff14', fontStyle: 'bold' };
+        const valueStyle4 = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#ff0055', fontStyle: 'bold' };
 
         this.add.text(rx, 60, 'SCORE', labelStyle);
         this.scoreTxt = this.add.text(rx, 74, '0', valueStyle);
@@ -376,7 +396,7 @@ export default class BubbleShooterGameFactory {
         this.add.text(rx, 264, 'NEXT', labelStyle);
 
         // controls hint
-        const lx = BS_OX - 15;
+        const lx = BS_OX - 8;
         this.add.text(lx, 60, 'AIM\nmouse', { fontFamily: 'monospace', fontSize: '9px', color: '#45456b', align: 'right', lineSpacing: 3 }).setOrigin(1, 0);
         this.add.text(lx, 88, 'SHOOT\nclick', { fontFamily: 'monospace', fontSize: '9px', color: '#45456b', align: 'right', lineSpacing: 3 }).setOrigin(1, 0);
 
@@ -429,10 +449,9 @@ export default class BubbleShooterGameFactory {
         }
 
         // new preview bubble
-        const rx  = BS_OX + BS_PW + 14;
         const pal = BS_PAL.slice(0, this.palSize);
         const col = pal[Math.floor(Math.random() * pal.length)];
-        this.nxtSpr = this.add.sprite(rx + 18, 287, 'b' + col.k).setOrigin(0.5).setScale(0.8).setDepth(2);
+        this.nxtSpr = this.add.sprite(BS_OX + BS_PW + 40, 287, 'b' + col.k).setOrigin(0.5).setScale(0.8).setDepth(2);
         this.nxtKey = col.k;
         this.nxtHex = col.h;
       }
@@ -461,6 +480,17 @@ export default class BubbleShooterGameFactory {
         this.curSpr     = null;
         this.ballActive = true;
 
+        // Create trail emitter
+        this.trailEmitter = this.add.particles(0, 0, 'bsdot', {
+          speed: 12,
+          scale: { start: 0.85, end: 0 },
+          lifespan: 220,
+          blendMode: 'ADD',
+          frequency: 20,
+          tint: this.ballHex
+        });
+        this.trailEmitter.startFollow(this.ballSpr);
+
         // Trigger recoil impact
         this.launcherRecoil = 12;
 
@@ -472,6 +502,12 @@ export default class BubbleShooterGameFactory {
         this.drawLaser();
         this.updateLauncher();
         this.animateGrid();
+
+        // Pulsate danger line glow
+        if (this.dangerGfx) {
+          const pulse = 0.5 + Math.sin(this.time.now / 150) * 0.35;
+          this.dangerGfx.setAlpha(pulse);
+        }
 
         if (!this.ballActive || !this.ballSpr) return;
 
@@ -554,6 +590,18 @@ export default class BubbleShooterGameFactory {
         this.launcherGfx.strokeCircle(rx, ry, BS_BR - 2);
         this.launcherGfx.fillStyle(0xbd00ff, 0.15);
         this.launcherGfx.fillCircle(rx, ry, BS_BR - 2);
+
+        // Rotating cyber-ring ticks
+        const baseAngle = this.time.now / 1000;
+        this.launcherGfx.lineStyle(1.5, 0x00f3ff, 0.7);
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+          const tickAngle = baseAngle + a;
+          const xStart = rx + Math.cos(tickAngle) * (BS_BR + 2);
+          const yStart = ry + Math.sin(tickAngle) * (BS_BR + 2);
+          const xEnd = rx + Math.cos(tickAngle) * (BS_BR + 6);
+          const yEnd = ry + Math.sin(tickAngle) * (BS_BR + 6);
+          this.launcherGfx.lineBetween(xStart, yStart, xEnd, yEnd);
+        }
       }
 
       // ── breathe/hover active grid bubbles ──────────────────────────────────
@@ -607,6 +655,10 @@ export default class BubbleShooterGameFactory {
           this.ballSpr.destroy();
           this.ballSpr    = null;
           this.ballActive = false;
+          if (this.trailEmitter) {
+            try { this.trailEmitter.destroy(); } catch {}
+            this.trailEmitter = null;
+          }
           this.nextBubble();
           return;
         }
@@ -650,6 +702,13 @@ export default class BubbleShooterGameFactory {
         const k = this.ballKey, h = this.ballHex;
         if (this.ballSpr) { try { this.ballSpr.destroy(); } catch {} }
         this.ballSpr = null;
+
+        if (this.trailEmitter) {
+          const emitterRef = this.trailEmitter;
+          emitterRef.stopFollow();
+          this.time.delayedCall(300, () => { try { emitterRef.destroy(); } catch {} });
+          this.trailEmitter = null;
+        }
 
         // find closest empty connected slot
         let br = -1, bc = -1, bd = Infinity;
@@ -735,13 +794,14 @@ export default class BubbleShooterGameFactory {
           const em = this.add.particles(0, 0, 'bsdot', {
             speed: { min: 50, max: 120 },
             angle: { min: 0, max: 360 },
-            scale: { start: 1, end: 0 },
-            lifespan: 320,
+            scale: { start: 1.2, end: 0 },
+            lifespan: 380,
             blendMode: 'ADD',
+            tint: b.h
           });
           em.explode(8, b.spr.x, b.spr.y);
           const emRef = em;
-          this.time.delayedCall(380, function() { try { emRef.destroy(); } catch {} });
+          this.time.delayedCall(450, function() { try { emRef.destroy(); } catch {} });
         } catch {}
         this.tweens.add({
           targets: b.spr, scaleX: 0, scaleY: 0, alpha: 0, duration: 110,
@@ -853,16 +913,16 @@ export default class BubbleShooterGameFactory {
         this.time.delayedCall(130, () => beep(659, 0.08, 0.12, 'square'));
         this.time.delayedCall(260, () => beep(784, 0.08, 0.12, 'square'));
         const scene = this;
-        this.add.rectangle(300, 300, 600, 600, 0x02020a, 0.75);
+        this.add.rectangle(240, 300, 480, 600, 0x02020a, 0.75);
         
-        this.add.rectangle(300, 290, 260, 120, 0x0a0a24).setStrokeStyle(3, 0x39ff14);
+        this.add.rectangle(240, 290, 260, 120, 0x0a0a24).setStrokeStyle(3, 0x39ff14);
         
-        const winTitle = this.add.text(300, 255, '🏆 LEVEL CLEAR!', { fontFamily: 'Orbitron, monospace', fontSize: '18px', color: '#39ff14', fontStyle: 'bold' }).setOrigin(0.5);
+        const winTitle = this.add.text(240, 255, '🏆 LEVEL CLEAR!', { fontFamily: 'Orbitron, monospace', fontSize: '18px', color: '#39ff14', fontStyle: 'bold' }).setOrigin(0.5);
         winTitle.setStroke('#39ff14', 2);
         winTitle.setShadow(0, 0, '#39ff14', 10, true, true);
 
-        this.add.text(300, 288, 'Score: ' + this.score, { fontFamily: 'Orbitron, monospace', fontSize: '14px', color: '#e0e0ff', fontStyle: 'bold' }).setOrigin(0.5);
-        this.add.text(300, 312, 'Next level in 2s…', { fontFamily: 'monospace', fontSize: '11px', color: '#888888' }).setOrigin(0.5);
+        this.add.text(240, 288, 'Score: ' + this.score, { fontFamily: 'Orbitron, monospace', fontSize: '14px', color: '#e0e0ff', fontStyle: 'bold' }).setOrigin(0.5);
+        this.add.text(240, 312, 'Next level in 2s…', { fontFamily: 'monospace', fontSize: '11px', color: '#888888' }).setOrigin(0.5);
         this.time.delayedCall(2200, function() { scene.scene.restart({ level: scene.level + 1, score: scene.score + 500 }); });
       }
 
@@ -875,16 +935,16 @@ export default class BubbleShooterGameFactory {
         }
         beep(200, 0.09, 0.5, 'square');
         this.time.delayedCall(300, () => beep(160, 0.08, 0.6, 'square'));
-        this.add.rectangle(300, 300, 600, 600, 0x02020a, 0.8);
+        this.add.rectangle(240, 300, 480, 600, 0x02020a, 0.8);
         
-        this.add.rectangle(300, 290, 260, 120, 0x14020a).setStrokeStyle(3, 0xff0055);
+        this.add.rectangle(240, 290, 260, 120, 0x14020a).setStrokeStyle(3, 0xff0055);
         
-        const overTitle = this.add.text(300, 255, 'GAME  OVER', { fontFamily: 'Orbitron, monospace', fontSize: '20px', color: '#ff0055', fontStyle: 'bold' }).setOrigin(0.5);
+        const overTitle = this.add.text(240, 255, 'GAME  OVER', { fontFamily: 'Orbitron, monospace', fontSize: '20px', color: '#ff0055', fontStyle: 'bold' }).setOrigin(0.5);
         overTitle.setStroke('#ff0055', 2);
         overTitle.setShadow(0, 0, '#ff0055', 10, true, true);
 
-        this.add.text(300, 288, 'Score: ' + this.score, { fontFamily: 'Orbitron, monospace', fontSize: '14px', color: '#e0e0ff', fontStyle: 'bold' }).setOrigin(0.5);
-        this.add.text(300, 312, 'Click to restart', { fontFamily: 'monospace', fontSize: '11px', color: '#888888' }).setOrigin(0.5);
+        this.add.text(240, 288, 'Score: ' + this.score, { fontFamily: 'Orbitron, monospace', fontSize: '14px', color: '#e0e0ff', fontStyle: 'bold' }).setOrigin(0.5);
+        this.add.text(240, 312, 'Click to restart', { fontFamily: 'monospace', fontSize: '11px', color: '#888888' }).setOrigin(0.5);
         try {
           window.dispatchEvent(new CustomEvent('phaser-game-over', { detail: { gameKey: 'bubble-shooter', score: this.score } }));
         } catch {}
@@ -949,9 +1009,20 @@ export default class BubbleShooterGameFactory {
           }
         }
 
-        // landing circle
-        this.laserGfx.lineStyle(1.2, dotHex, 0.3);
-        this.laserGfx.strokeCircle(cx, cy, BS_BR);
+        // landing circle with targeting crosshair
+        const targetPulse = 1 + Math.sin(this.time.now / 100) * 0.08;
+        const radius = BS_BR * targetPulse;
+        this.laserGfx.lineStyle(1.2, dotHex, 0.65);
+        this.laserGfx.strokeCircle(cx, cy, radius);
+        this.laserGfx.lineStyle(0.8, dotHex, 0.3);
+        this.laserGfx.strokeCircle(cx, cy, radius - 4);
+        
+        // Crosshair lines
+        this.laserGfx.lineStyle(1, dotHex, 0.5);
+        this.laserGfx.lineBetween(cx - radius - 2, cy, cx - radius + 3, cy);
+        this.laserGfx.lineBetween(cx + radius - 3, cy, cx + radius + 2, cy);
+        this.laserGfx.lineBetween(cx, cy - radius - 2, cx, cy - radius + 3);
+        this.laserGfx.lineBetween(cx, cy + radius - 3, cx, cy + radius + 2);
       }
     };
   }

@@ -52,7 +52,7 @@ async function run() {
     tags: ['bubble', 'shooter', 'neon', 'puzzle', 'arcade'],
     gameType: 'phaser',
     phaserGameKey: 'bubble-shooter',
-    width: 600,
+    width: 480,
     height: 600,
     featured: true,
     isActive: true,

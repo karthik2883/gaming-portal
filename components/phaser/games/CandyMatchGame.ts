@@ -107,11 +107,12 @@ function saveProgress(levelIndex: number, stars: number) {
 }
 
 // ─── Candy Types ───────────────────────────────────────────────────────────
-const TILE_SIZE = 54;
+const TILE_SIZE = 60;
 const GRID_ROWS = 8;
 const GRID_COLS = 8;
-const BOARD_X = 230;
+const BOARD_X = 275;
 const BOARD_Y = 90;
+const SIDE_X = 140;
 
 const ALL_CANDY_TYPES = [
   { type: 0, colorStr: '#ff0055' },
@@ -470,7 +471,7 @@ class CandyMatchSceneFactory {
       buildHUD() {
         const cfg = this.levelConfig;
         const W = this.scale.width, H = this.scale.height;
-        const sideX = 110; // center of left sidebar
+        const sideX = SIDE_X; // center of left sidebar
 
         // Back button
         const backBtn = this.add.text(20, 18, '‹ LEVELS', {
@@ -490,12 +491,12 @@ class CandyMatchSceneFactory {
         }).setOrigin(0.5).setShadow(0, 0, cfg.accentStr, 6, true, true);
 
         this.add.text(sideX, 73, cfg.name, {
-          fontFamily: 'monospace', fontSize: '11px', color: '#808098'
+          fontFamily: 'monospace', fontSize: '11px', color: '#ffffff'
         }).setOrigin(0.5);
 
         // Score
         this.add.text(sideX, 115, 'SCORE', {
-          fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#606080'
+          fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#aaaacc'
         }).setOrigin(0.5);
         this.scoreText = this.add.text(sideX, 135, '0', {
           fontFamily: 'Orbitron, monospace', fontSize: '26px',
@@ -504,7 +505,7 @@ class CandyMatchSceneFactory {
 
         // Target
         this.add.text(sideX, 165, `TARGET: ${cfg.targetScore.toLocaleString()}`, {
-          fontFamily: 'monospace', fontSize: '11px', color: '#9090b0'
+          fontFamily: 'monospace', fontSize: '11px', color: '#aaaacc'
         }).setOrigin(0.5);
 
         // Progress bar
@@ -522,7 +523,7 @@ class CandyMatchSceneFactory {
 
         // Moves
         this.add.text(sideX, 245, 'MOVES', {
-          fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#606080'
+          fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#aaaacc'
         }).setOrigin(0.5);
         this.movesText = this.add.text(sideX, 265, `${cfg.moves}`, {
           fontFamily: 'Orbitron, monospace', fontSize: '36px',
@@ -533,12 +534,12 @@ class CandyMatchSceneFactory {
         this.add.text(sideX, 320, 'SPECIALS:', {
           fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#39ff14'
         }).setOrigin(0.5);
-        const bulletStyle = { fontFamily: 'monospace', fontSize: '10px', color: '#606080', wordWrap: { width: 185 } };
-        this.add.text(22, 338, '⚡ Match-4 → Striped', bulletStyle);
-        this.add.text(22, 358, '💥 Match-5 T/L → Wrapped', bulletStyle);
-        this.add.text(22, 378, '🌈 Match-5 line → Color Bomb', bulletStyle);
+        const bulletStyle = { fontFamily: 'monospace', fontSize: '10px', color: '#d0d0ff', wordWrap: { width: 185 } };
+        this.add.text(SIDE_X - 88, 338, '⚡ Match-4 → Striped', bulletStyle);
+        this.add.text(SIDE_X - 88, 358, '💥 Match-5 T/L → Wrapped', bulletStyle);
+        this.add.text(SIDE_X - 88, 378, '🌈 Match-5 line → Color Bomb', bulletStyle);
         if (cfg.iceBlocks.length > 0) {
-          this.add.text(22, 400, '🧊 Match next to ice → breaks it!', bulletStyle);
+          this.add.text(SIDE_X - 88, 400, '🧊 Match next to ice → breaks it!', bulletStyle);
         }
 
         // Particle emitter
@@ -552,14 +553,14 @@ class CandyMatchSceneFactory {
         });
 
         // Bottom help
-        this.add.text(W / 2 + 110, H - 18, '🖱️ Click two adjacent candies to swap', {
-          fontFamily: 'monospace', fontSize: '10px', color: '#404060'
+        this.add.text(W / 2, H - 18, '🖱️ Click two adjacent candies to swap', {
+          fontFamily: 'monospace', fontSize: '10px', color: '#aaaacc'
         }).setOrigin(0.5);
       }
 
       updateProgressBar() {
         const cfg = this.levelConfig;
-        const barX = (110) - 75, barY = 178, barW = 150, barH = 10;
+        const barX = SIDE_X - 75, barY = 178, barW = 150, barH = 10;
         const frac = Math.min(1, this.score / cfg.targetScore);
         if (this.progressFill?.active) {
           this.progressFill.clear();
@@ -662,13 +663,13 @@ class CandyMatchSceneFactory {
         else if (special === 'color-bomb') texKey = 'candy-color-bomb';
 
         const sprite = this.add.sprite(x, initialY, texKey);
-        sprite.setInteractive().setScale(0.85);
+        sprite.setInteractive().setScale(0.95);
         sprite.gridRow = row; sprite.gridCol = col;
 
         let iceSprite: any = undefined;
         if (iceHp > 0) {
           iceSprite = this.add.sprite(x, initialY, iceHp >= 2 ? 'ice-block' : 'ice-crack');
-          iceSprite.setScale(0.85).setDepth(5);
+          iceSprite.setScale(1.1).setDepth(5);
           if (startY !== null) {
             this.tweens.add({ targets: iceSprite, y: targetY, duration: 350, ease: 'Bounce.easeOut' });
           }
@@ -717,7 +718,7 @@ class CandyMatchSceneFactory {
         if (!this.selectedTile) return;
         const candy = this.board[this.selectedTile.row][this.selectedTile.col];
         if (candy?.sprite) {
-          candy.sprite.setScale(active ? 1.05 : 0.85);
+          candy.sprite.setScale(active ? 1.15 : 0.95);
           active ? candy.sprite.setTint(0xdddddd) : candy.sprite.clearTint();
         }
       }
@@ -930,8 +931,8 @@ class CandyMatchSceneFactory {
             else if(candy.special==='color-bomb') tex='candy-color-bomb';
             candy.sprite.setTexture(tex);
             this.tweens.add({
-              targets: candy.sprite, scale: 1.2, duration: 100, yoyo: true,
-              onComplete: ()=>{ if(candy.sprite?.active) candy.sprite.setScale(0.85); }
+              targets: candy.sprite, scale: 1.3, duration: 100, yoyo: true,
+              onComplete: ()=>{ if(candy.sprite?.active) candy.sprite.setScale(0.95); }
             });
           } else {
             this.particleEmitter.explode(7, cx, cy);
