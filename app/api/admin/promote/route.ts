@@ -101,14 +101,32 @@ async function recordGameplay(gameSlug: string, outputPath: string): Promise<boo
   // Focus and select levels for games
   console.log('Clicking canvas to focus and select level...');
   await page.mouse.click(400, 300); // Center click
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
   if (gameSlug === 'candy-match') {
     await page.mouse.click(200, 200); // Level 1 button
+    await new Promise(resolve => setTimeout(resolve, 2500)); // Wait for grid entrance animation
+  } else if (gameSlug === 'football-strike' || gameSlug === 'football') {
+    await page.mouse.click(400, 480); // Click select country
     await new Promise(resolve => setTimeout(resolve, 1000));
-  } else if (gameSlug === 'football-strike') {
-    await page.mouse.click(400, 480);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await page.mouse.click(400, 480); // Click start match
+    await new Promise(resolve => setTimeout(resolve, 2500)); // Wait for field fade-in
+  } else if (gameSlug === 'bubble-shooter') {
+    // Click play button on home screen of bubble shooter
+    await page.mouse.click(240, 450); // Click play button
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for board to slide down
+  } else if (gameSlug === 'typing' || gameSlug === 'type-racer' || gameSlug === 'neon-velocity') {
+    // Select mode
+    await page.mouse.click(400, 350); 
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  } else if (gameSlug === 'tetris' || gameSlug === 'sudoku' || gameSlug === 'pacman') {
+    // Press center to start game
+    await page.mouse.click(400, 350);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  } else {
+    // Generic default start sequence
+    await page.mouse.click(400, 300);
+    await new Promise(resolve => setTimeout(resolve, 1500));
   }
 
   console.log('Starting MediaRecorder on Canvas...');
@@ -139,9 +157,9 @@ async function recordGameplay(gameSlug: string, outputPath: string): Promise<boo
     recorder.start();
   });
 
-  console.log('Recording 15 seconds of simulated inputs...');
-  const duration = 15; // 15 seconds
-  const steps = 15;
+  console.log('Recording 25 seconds of simulated inputs...');
+  const duration = 25; // 25 seconds
+  const steps = 25;
   for (let i = 0; i < steps; i++) {
     if (gameSlug === 'candy-match') {
       const col1 = Math.floor(Math.random() * 8);
