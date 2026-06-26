@@ -3,6 +3,8 @@ import { GoogleGenAI } from '@google/genai';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { connectDB } from '@/lib/db';
+import Settings from '@/lib/models/Settings';
 
 // Helper to encode strings as percentage-encoded for OAuth
 function percentEncode(str: string): string {
@@ -50,13 +52,19 @@ function generateOAuthSignature(
 }
 
 // Helper to generate OAuth 1.0a header
-function getOAuthHeader(method: string, url: string, queryParams: Record<string, string> = {}, bodyParams: Record<string, string> = {}): string {
+function getOAuthHeader(
+  method: string, 
+  url: string, 
+  creds: Record<string, string>,
+  queryParams: Record<string, string> = {}, 
+  bodyParams: Record<string, string> = {}
+): string {
   const oauthParams: Record<string, string> = {
-    oauth_consumer_key: process.env.X_API_KEY || '',
+    oauth_consumer_key: creds.X_API_KEY || '',
     oauth_nonce: crypto.randomBytes(16).toString('hex'),
     oauth_signature_method: 'HMAC-SHA1',
     oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-    oauth_token: process.env.X_ACCESS_TOKEN || '',
+    oauth_token: creds.X_ACCESS_TOKEN || '',
     oauth_version: '1.0'
   };
 
@@ -66,8 +74,8 @@ function getOAuthHeader(method: string, url: string, queryParams: Record<string,
     oauthParams,
     queryParams,
     bodyParams,
-    process.env.X_API_SECRET || '',
-    process.env.X_ACCESS_SECRET || ''
+    creds.X_API_SECRET || '',
+    creds.X_ACCESS_SECRET || ''
   );
 
   oauthParams.oauth_signature = signature;
@@ -77,6 +85,39 @@ function getOAuthHeader(method: string, url: string, queryParams: Record<string,
     .map(key => `${percentEncode(key)}="${percentEncode(oauthParams[key as keyof typeof oauthParams])}"`);
 
   return `OAuth ${headerParts.join(', ')}`;
+}
+
+// Helper to load all social media API keys/secrets from DB with fallback to process.env
+async function loadSocialCredentials(): Promise<Record<string, string>> {
+  const creds: Record<string, string> = {
+    X_API_KEY: process.env.X_API_KEY || '',
+    X_API_SECRET: process.env.X_API_SECRET || '',
+    X_ACCESS_TOKEN: process.env.X_ACCESS_TOKEN || '',
+    X_ACCESS_SECRET: process.env.X_ACCESS_SECRET || '',
+    X_BEARER_TOKEN: process.env.X_BEARER_TOKEN || '',
+    YT_CLIENT_ID: process.env.YT_CLIENT_ID || '',
+    YT_CLIENT_SECRET: process.env.YT_CLIENT_SECRET || '',
+    YT_REFRESH_TOKEN: process.env.YT_REFRESH_TOKEN || '',
+    META_ACCESS_TOKEN: process.env.META_ACCESS_TOKEN || '',
+    FB_PAGE_ID: process.env.FB_PAGE_ID || '',
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  };
+
+  try {
+    await connectDB();
+    const doc = await Settings.findOne({ key: 'social_credentials' });
+    if (doc && doc.value) {
+      doc.value.forEach((val: string, key: string) => {
+        if (val) {
+          creds[key] = val;
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Error loading credentials from settings database:', err);
+  }
+
+  return creds;
 }
 
 // 1. Video Recording using Puppeteer
@@ -212,9 +253,9 @@ async function recordGameplay(gameSlug: string, outputPath: string): Promise<boo
 }
 
 // 2. Post to X (Twitter)
-async function postToX(videoPath: string, caption: string): Promise<string> {
-  if (!process.env.X_API_KEY || !process.env.X_ACCESS_TOKEN) {
-    throw new Error('Missing X API credentials in environment variables.');
+async function postToX(videoPath: string, caption: string, creds: Record<string, string>): Promise<string> {
+  if (!creds.X_API_KEY || !creds.X_ACCESS_TOKEN) {
+    throw new Error('Missing X API credentials (API Key or Access Token).');
   }
 
   const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
@@ -228,7 +269,7 @@ async function postToX(videoPath: string, caption: string): Promise<string> {
     media_type: 'video/mp4',
     media_category: 'tweet_video'
   };
-  const initHeader = getOAuthHeader('POST', uploadUrl, {}, initParams);
+  const initHeader = getOAuthHeader('POST', uploadUrl, creds, {}, initParams);
 
   const initFormData = new FormData();
   Object.keys(initParams).forEach(k => initFormData.append(k, initParams[k as keyof typeof initParams]));
@@ -258,7 +299,7 @@ async function postToX(videoPath: string, caption: string): Promise<string> {
       media_id: mediaId,
       segment_index: segmentIndex.toString()
     };
-    const appendHeader = getOAuthHeader('POST', uploadUrl, {}, appendParams);
+    const appendHeader = getOAuthHeader('POST', uploadUrl, creds, {}, appendParams);
 
     const appendFormData = new FormData();
     Object.keys(appendParams).forEach(k => appendFormData.append(k, appendParams[k as keyof typeof appendParams]));
@@ -282,7 +323,7 @@ async function postToX(videoPath: string, caption: string): Promise<string> {
     command: 'FINALIZE',
     media_id: mediaId
   };
-  const finalizeHeader = getOAuthHeader('POST', uploadUrl, {}, finalizeParams);
+  const finalizeHeader = getOAuthHeader('POST', uploadUrl, creds, {}, finalizeParams);
 
   const finalizeFormData = new FormData();
   Object.keys(finalizeParams).forEach(k => finalizeFormData.append(k, finalizeParams[k as keyof typeof finalizeParams]));
@@ -306,7 +347,7 @@ async function postToX(videoPath: string, caption: string): Promise<string> {
       await new Promise(r => setTimeout(r, checkAfter * 1000));
       const statusUrl = `https://upload.twitter.com/1.1/media/upload.json`;
       const statusQueryParams = { command: 'STATUS', media_id: mediaId };
-      const statusHeader = getOAuthHeader('GET', statusUrl, statusQueryParams);
+      const statusHeader = getOAuthHeader('GET', statusUrl, creds, statusQueryParams);
 
       const statusRes = await fetch(`${statusUrl}?command=STATUS&media_id=${mediaId}`, {
         method: 'GET',
@@ -329,7 +370,7 @@ async function postToX(videoPath: string, caption: string): Promise<string> {
     media: { media_ids: [mediaId] }
   };
   
-  const tweetHeader = getOAuthHeader('POST', tweetUrl, {}, {});
+  const tweetHeader = getOAuthHeader('POST', tweetUrl, creds, {}, {});
   const tweetRes = await fetch(tweetUrl, {
     method: 'POST',
     headers: {
@@ -349,9 +390,9 @@ async function postToX(videoPath: string, caption: string): Promise<string> {
 }
 
 // 3. Post to YouTube (Shorts)
-async function postToYouTube(videoPath: string, gameTitle: string, caption: string): Promise<string> {
-  if (!process.env.YT_CLIENT_ID || !process.env.YT_REFRESH_TOKEN || !process.env.YT_CLIENT_SECRET) {
-    throw new Error('Missing YouTube API credentials in environment variables.');
+async function postToYouTube(videoPath: string, gameTitle: string, caption: string, creds: Record<string, string>): Promise<string> {
+  if (!creds.YT_CLIENT_ID || !creds.YT_REFRESH_TOKEN || !creds.YT_CLIENT_SECRET) {
+    throw new Error('Missing YouTube API credentials (Client ID, Client Secret, or Refresh Token).');
   }
 
   console.log('Refreshing Google API Access Token...');
@@ -359,9 +400,9 @@ async function postToYouTube(videoPath: string, gameTitle: string, caption: stri
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: process.env.YT_CLIENT_ID,
-      client_secret: process.env.YT_CLIENT_SECRET,
-      refresh_token: process.env.YT_REFRESH_TOKEN,
+      client_id: creds.YT_CLIENT_ID,
+      client_secret: creds.YT_CLIENT_SECRET,
+      refresh_token: creds.YT_REFRESH_TOKEN,
       grant_type: 'refresh_token'
     })
   });
@@ -430,16 +471,16 @@ async function postToYouTube(videoPath: string, gameTitle: string, caption: stri
 }
 
 // 4. Post to Facebook Page
-async function postToFacebook(videoPath: string, caption: string): Promise<string> {
-  if (!process.env.META_ACCESS_TOKEN || !process.env.FB_PAGE_ID) {
-    throw new Error('Missing Meta Page token or Facebook Page ID in environment variables.');
+async function postToFacebook(videoPath: string, caption: string, creds: Record<string, string>): Promise<string> {
+  if (!creds.META_ACCESS_TOKEN || !creds.FB_PAGE_ID) {
+    throw new Error('Missing Meta Page token or Facebook Page ID.');
   }
 
-  const fbUrl = `https://graph.facebook.com/v19.0/${process.env.FB_PAGE_ID}/videos`;
+  const fbUrl = `https://graph.facebook.com/v19.0/${creds.FB_PAGE_ID}/videos`;
   const videoBuffer = fs.readFileSync(videoPath);
 
   const fbFormData = new FormData();
-  fbFormData.append('access_token', process.env.META_ACCESS_TOKEN);
+  fbFormData.append('access_token', creds.META_ACCESS_TOKEN);
   fbFormData.append('description', caption);
   fbFormData.append('source', new Blob([videoBuffer]), 'gameplay.webm');
 
@@ -472,6 +513,9 @@ export async function POST(req: NextRequest) {
     const videoPath = path.join(tempDir, `${gameSlug || 'game'}_gameplay.webm`);
     const relativeVideoUrl = `/temp_promo/${gameSlug || 'game'}_gameplay.webm`;
 
+    // Load credentials once at start of API processing
+    const creds = await loadSocialCredentials();
+
     // ── Action 1: Record Gameplay Video ──────────────────────────────────────
     if (action === 'record') {
       if (!gameSlug) {
@@ -492,7 +536,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'gameTitle is required for caption' }, { status: 400 });
       }
 
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = creds.GEMINI_API_KEY;
       const gameUrl = `https://www.fliptripgames.com/game/${gameSlug || ''}`;
       
       if (!apiKey) {
@@ -546,14 +590,13 @@ The object must have exactly this key:
         return NextResponse.json({ success: false, error: 'Gameplay video does not exist. Please generate it first.' }, { status: 400 });
       }
 
-      const gameUrl = `https://www.fliptripgames.com/game/${gameSlug}`;
       const results: Record<string, any> = {};
       const errors: Record<string, string> = {};
 
       // X (Twitter)
       if (platforms.includes('x')) {
         try {
-          results.x = await postToX(videoPath, caption);
+          results.x = await postToX(videoPath, caption, creds);
         } catch (err: any) {
           errors.x = err.message || 'Unknown error';
         }
@@ -562,7 +605,7 @@ The object must have exactly this key:
       // YouTube (Shorts)
       if (platforms.includes('youtube')) {
         try {
-          results.youtube = await postToYouTube(videoPath, gameTitle || gameSlug, caption);
+          results.youtube = await postToYouTube(videoPath, gameTitle || gameSlug, caption, creds);
         } catch (err: any) {
           errors.youtube = err.message || 'Unknown error';
         }
@@ -571,7 +614,7 @@ The object must have exactly this key:
       // Facebook Page
       if (platforms.includes('facebook')) {
         try {
-          results.facebook = await postToFacebook(videoPath, caption);
+          results.facebook = await postToFacebook(videoPath, caption, creds);
         } catch (err: any) {
           errors.facebook = err.message || 'Unknown error';
         }

@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/admin/menus', icon: '☰', label: 'Menus' },
   { href: '/admin/games', icon: '🎮', label: 'Games' },
   { href: '/admin/homepage', icon: '✨', label: 'Homepage' },
+  { href: '/admin/settings', icon: '⚙️', label: 'Social Settings' },
 ];
 
 export default function AdminSidebar() {
