@@ -54,6 +54,15 @@ export default function GameForm({ gameId }: GameFormProps) {
   const [generatingSeo, setGeneratingSeo] = useState(false);
   const [loading, setLoading] = useState(!!gameId);
 
+  // Promotion states
+  const [recording, setRecording] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [generatingCaption, setGeneratingCaption] = useState(false);
+  const [caption, setCaption] = useState('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['x']);
+  const [publishing, setPublishing] = useState(false);
+  const [pubLogs, setPubLogs] = useState<string[]>([]);
+
   useEffect(() => {
     fetch('/api/categories').then(r => r.json()).then(d => {
       if (d.success) setCategories(d.data);
@@ -74,6 +83,14 @@ export default function GameForm({ gameId }: GameFormProps) {
             seoTitle: g.seoTitle || '', seoDescription: g.seoDescription || '', seoKeywords: g.seoKeywords || '',
             sortOrder: g.sortOrder,
           });
+
+          // Check if gameplay video already exists locally
+          fetch(`/temp_promo/${g.slug}_gameplay.webm`, { method: 'HEAD' })
+            .then(res => {
+              if (res.ok) {
+                setVideoUrl(`/temp_promo/${g.slug}_gameplay.webm`);
+              }
+            }).catch(() => {});
         }
         setLoading(false);
       });
@@ -140,6 +157,110 @@ export default function GameForm({ gameId }: GameFormProps) {
       toast.error('Failed to call AI SEO generator');
     }
     setGeneratingSeo(false);
+  };
+
+  const handleGenerateVideo = async () => {
+    setRecording(true);
+    setVideoUrl('');
+    try {
+      const res = await fetch('/api/admin/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'record',
+          gameSlug: form.slug
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.videoUrl) {
+        setVideoUrl(data.videoUrl);
+        toast.success('Gameplay video generated successfully!');
+        if (!caption) {
+          handleGenerateCaption();
+        }
+      } else {
+        toast.error(data.error || 'Failed to record gameplay');
+      }
+    } catch {
+      toast.error('Network error during gameplay recording');
+    }
+    setRecording(false);
+  };
+
+  const handleGenerateCaption = async () => {
+    setGeneratingCaption(true);
+    try {
+      const res = await fetch('/api/admin/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'caption',
+          gameSlug: form.slug,
+          gameTitle: form.title,
+          gameDescription: form.description,
+          gameTags: form.tags
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.caption) {
+        setCaption(data.caption);
+        toast.success('AI Caption generated!');
+      } else {
+        toast.error(data.error || 'Failed to generate AI caption');
+      }
+    } catch {
+      toast.error('Network error during caption generation');
+    }
+    setGeneratingCaption(false);
+  };
+
+  const handlePublish = async () => {
+    if (!caption.trim()) {
+      toast.error('Please enter a caption for the post');
+      return;
+    }
+    if (selectedPlatforms.length === 0) {
+      toast.error('Please select at least one social network');
+      return;
+    }
+
+    setPublishing(true);
+    setPubLogs(['Initiating publishing request...', `Target platforms: ${selectedPlatforms.join(', ').toUpperCase()}`]);
+    
+    try {
+      const res = await fetch('/api/admin/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'publish',
+          gameSlug: form.slug,
+          gameTitle: form.title,
+          caption,
+          platforms: selectedPlatforms
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const logs: string[] = [];
+        selectedPlatforms.forEach(p => {
+          if (data.results[p]) {
+            logs.push(`✅ ${p.toUpperCase()}: ${data.results[p]}`);
+          }
+          if (data.errors?.[p]) {
+            logs.push(`❌ ${p.toUpperCase()} Error: ${data.errors[p]}`);
+          }
+        });
+        setPubLogs(l => [...l, ...logs, 'Publishing completed!']);
+        toast.success('Promotion request processed!');
+      } else {
+        toast.error(data.error || 'Publishing failed');
+        setPubLogs(l => [...l, `❌ Error: ${data.error || 'Failed to publish'}`]);
+      }
+    } catch {
+      toast.error('Network error during publishing');
+      setPubLogs(l => [...l, '❌ Network error occurred.']);
+    }
+    setPublishing(false);
   };
 
   const toggleCategory = (id: string) => {
@@ -374,6 +495,109 @@ export default function GameForm({ gameId }: GameFormProps) {
               )}
             </div>
           </div>
+
+          {/* Social Promotion Card */}
+          {gameId && (
+            <div style={{ background: 'var(--gradient-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--border-radius)', padding: '24px' }}>
+              <h3 style={{ fontFamily: 'Orbitron', fontSize: '0.95rem', marginBottom: '16px', color: 'var(--accent-cyan)' }}>
+                📢 Social Promotion (Local)
+              </h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Step 1: Video */}
+                <div>
+                  <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>1. Promo Video</label>
+                  {videoUrl ? (
+                    <div style={{ width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)', background: 'black', marginBottom: '8px' }}>
+                      <video src={videoUrl} controls style={{ width: '100%', display: 'block' }} />
+                    </div>
+                  ) : (
+                    <div style={{ height: '120px', border: '1px dashed var(--border-subtle)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '16px', marginBottom: '8px' }}>
+                      No gameplay video generated yet.
+                    </div>
+                  )}
+                  
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={handleGenerateVideo}
+                    disabled={recording || saving || publishing}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    {recording ? '🎬 Recording (15s)...' : (videoUrl ? '🎬 Re-Record Gameplay' : '🎬 Generate Gameplay Video')}
+                  </button>
+                </div>
+
+                {/* Step 2: AI Caption */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>2. AI Post Caption</label>
+                    <button 
+                      type="button" 
+                      className="btn btn-ghost btn-xs"
+                      onClick={handleGenerateCaption}
+                      disabled={generatingCaption || recording || publishing}
+                      style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                    >
+                      {generatingCaption ? '✨ Loading...' : '✨ Gemini AI'}
+                    </button>
+                  </div>
+                  <textarea 
+                    className="form-control" 
+                    value={caption} 
+                    onChange={e => setCaption(e.target.value)}
+                    placeholder="Enter social media caption and hashtags..."
+                    style={{ minHeight: '90px', fontSize: '0.8rem', resize: 'vertical' }}
+                  />
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', textAlign: 'right' }}>
+                    {caption.length} / 280 characters
+                  </div>
+                </div>
+
+                {/* Step 3: Platforms */}
+                <div>
+                  <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>3. Platforms</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {['x', 'youtube', 'facebook'].map(plat => (
+                      <label key={plat} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={selectedPlatforms.includes(plat)}
+                          onChange={e => setSelectedPlatforms(
+                            e.target.checked 
+                              ? [...selectedPlatforms, plat]
+                              : selectedPlatforms.filter(p => p !== plat)
+                          )}
+                          style={{ width: '14px', height: '14px' }}
+                        />
+                        {plat === 'x' ? '𝕏 (Twitter)' : plat === 'youtube' ? '🎥 YouTube Shorts' : '👥 Facebook Page'}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Publish Button */}
+                <button 
+                  type="button" 
+                  className="btn btn-primary btn-sm"
+                  onClick={handlePublish}
+                  disabled={publishing || recording || !videoUrl || !caption.trim()}
+                  style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(45deg, #00d4ff, #7928CA)' }}
+                >
+                  {publishing ? '🚀 Publishing...' : '🚀 Post to Selected Socials'}
+                </button>
+
+                {/* Log Console */}
+                {pubLogs.length > 0 && (
+                  <div style={{ background: 'black', color: '#00ff00', fontFamily: 'monospace', fontSize: '0.75rem', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-subtle)', maxHeight: '100px', overflowY: 'auto' }}>
+                    {pubLogs.map((log, index) => (
+                      <div key={index}>{log}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Save button */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
