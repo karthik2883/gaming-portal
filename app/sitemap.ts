@@ -6,13 +6,18 @@ import Category from '@/lib/models/Category';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.fliptripgames.com';
   
-  await connectDB();
+  let categories: any[] = [];
+  let games: any[] = [];
   
-  // Get all active categories
-  const categories = await Category.find({ isActive: true }).select('slug updatedAt').lean() as any[];
-  
-  // Get all active games
-  const games = await Game.find({ isActive: true }).select('slug updatedAt').lean() as any[];
+  try {
+    await connectDB();
+    // Get all active categories
+    categories = await Category.find({ isActive: true }).select('slug updatedAt').lean() as any[];
+    // Get all active games
+    games = await Game.find({ isActive: true }).select('slug updatedAt').lean() as any[];
+  } catch (err) {
+    console.warn("Failed to connect to database for sitemap generation. Falling back to static routes.", err);
+  }
 
   const categoryEntries: MetadataRoute.Sitemap = categories.map((cat) => ({
     url: `${baseUrl}/${cat.slug}`,
