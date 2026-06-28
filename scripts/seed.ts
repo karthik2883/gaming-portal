@@ -19,6 +19,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/gaming
 const CategorySchema = new mongoose.Schema({
   name: String, slug: String, icon: String, description: String,
   isActive: Boolean, sortOrder: Number,
+  seoTitle: String, seoDescription: String, seoKeywords: String,
 }, { timestamps: true });
 
 const MenuSchema = new mongoose.Schema({
@@ -32,6 +33,7 @@ const GameSchema = new mongoose.Schema({
   gameType: String, iframeUrl: String, phaserGameKey: String,
   width: Number, height: Number, featured: Boolean, isActive: Boolean,
   playCount: Number, rating: Number, sortOrder: Number, developer: String, instructions: String,
+  seoTitle: String, seoDescription: String, seoKeywords: String,
 }, { timestamps: true });
 
 const Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);

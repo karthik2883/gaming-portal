@@ -11,8 +11,8 @@ import CategoryModel from './models/Category';
 import HomepageConfigModel from './models/HomepageConfig';
 
 // ── Games list (home page) ────────────────────────────────────────────────────
-export const getCachedGames = unstable_cache(
-  async (limit = 40) => {
+export const getCachedGames = (limit = 40) => unstable_cache(
+  async () => {
     await connectDB();
     const games = await GameModel.find({ isActive: true })
       .sort({ featured: -1, playCount: -1, createdAt: -1 })
@@ -21,12 +21,12 @@ export const getCachedGames = unstable_cache(
       .lean();
     return JSON.parse(JSON.stringify(games));
   },
-  ['games-list'],
+  ['games-list', limit.toString()],
   { revalidate: 30, tags: ['games'] }
-);
+)();
 
 // ── Categories ────────────────────────────────────────────────────────────────
-export const getCachedCategories = unstable_cache(
+export const getCachedCategories = () => unstable_cache(
   async () => {
     await connectDB();
     const cats = await CategoryModel.find({ isActive: true })
@@ -36,10 +36,10 @@ export const getCachedCategories = unstable_cache(
   },
   ['categories-list'],
   { revalidate: 60, tags: ['categories'] }
-);
+)();
 
 // ── Homepage config ───────────────────────────────────────────────────────────
-export const getCachedHomepageConfig = unstable_cache(
+export const getCachedHomepageConfig = () => unstable_cache(
   async () => {
     await connectDB();
     const cfg = await HomepageConfigModel.findOne({ key: 'main' }).lean();
@@ -47,24 +47,24 @@ export const getCachedHomepageConfig = unstable_cache(
   },
   ['homepage-config'],
   { revalidate: 60, tags: ['homepage'] }
-);
+)();
 
 // ── Single game by slug ───────────────────────────────────────────────────────
-export const getCachedGame = unstable_cache(
-  async (slug: string) => {
+export const getCachedGame = (slug: string) => unstable_cache(
+  async () => {
     await connectDB();
     const game = await GameModel.findOne({ slug, isActive: true })
       .populate('categories', 'name slug icon')
       .lean();
     return game ? JSON.parse(JSON.stringify(game)) : null;
   },
-  ['game-by-slug'],
+  ['game-by-slug', slug],
   { revalidate: 60, tags: ['games'] }
-);
+)();
 
 // ── Games by category (for related games sidebar) ─────────────────────────────
-export const getCachedGamesByCategory = unstable_cache(
-  async (categoryId: string, excludeSlug: string, limit = 8) => {
+export const getCachedGamesByCategory = (categoryId: string, excludeSlug: string, limit = 8) => unstable_cache(
+  async () => {
     await connectDB();
     const games = await GameModel.find({
       isActive: true,
@@ -76,6 +76,6 @@ export const getCachedGamesByCategory = unstable_cache(
       .lean();
     return JSON.parse(JSON.stringify(games));
   },
-  ['games-by-category'],
+  ['games-by-category', categoryId, excludeSlug, limit.toString()],
   { revalidate: 60, tags: ['games'] }
-);
+)();

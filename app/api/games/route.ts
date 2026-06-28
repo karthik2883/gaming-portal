@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/lib/db';
 import Game from '@/lib/models/Game';
 import Category from '@/lib/models/Category'; // Register Category model for populate
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
 
     const game = await Game.create(body);
     await game.populate('categories', 'name slug icon');
+    revalidateTag('games');
     return NextResponse.json({ success: true, data: game }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

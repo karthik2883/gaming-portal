@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/lib/db';
 import Category from '@/lib/models/Category';
 
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     const category = await Category.create({ name, slug, icon, thumbnail, description, isActive, sortOrder, seoTitle, seoDescription, seoKeywords });
+    revalidateTag('categories');
     return NextResponse.json({ success: true, data: category }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

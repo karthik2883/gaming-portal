@@ -5,11 +5,7 @@ if (typeof globalThis.crypto === 'undefined') {
   (globalThis as any).crypto = webcrypto;
 }
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
-}
+const MONGODB_URI = process.env.MONGODB_URI;
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -27,9 +23,13 @@ if (!global.__mongoose) {
   global.__mongoose = cached;
 }
 
-const isLocal = MONGODB_URI.includes('localhost') || MONGODB_URI.includes('127.0.0.1');
-
 export async function connectDB() {
+  if (!MONGODB_URI) {
+    throw new Error('Please define the MONGODB_URI environment variable');
+  }
+
+  const isLocal = MONGODB_URI.includes('localhost') || MONGODB_URI.includes('127.0.0.1');
+
   // Already connected — reuse the connection (fastest path)
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;

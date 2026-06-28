@@ -50,9 +50,14 @@ The object must have exactly these keys:
     // Clean up potential markdown formatting if the model disobeys
     rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    const data = JSON.parse(rawText);
+    const parsed = JSON.parse(rawText);
+    const normalizedData = {
+      seoTitle: parsed.seoTitle || parsed.title || parsed.seo_title || '',
+      seoDescription: parsed.seoDescription || parsed.description || parsed.seo_description || '',
+      seoKeywords: parsed.seoKeywords || parsed.keywords || parsed.seo_keywords || ''
+    };
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: normalizedData });
   } catch (error: any) {
     console.error('SEO Generation Error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { connectDB } from '@/lib/db';
 import Game from '@/lib/models/Game';
 import Category from '@/lib/models/Category'; // Register Category model for populate
@@ -29,6 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const game = await Game.findByIdAndUpdate(params.id, body, { new: true, runValidators: true })
       .populate('categories', 'name slug icon');
     if (!game) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+    revalidateTag('games');
     return NextResponse.json({ success: true, data: game });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -40,6 +42,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     await connectDB();
     const game = await Game.findByIdAndDelete(params.id);
     if (!game) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+    revalidateTag('games');
     return NextResponse.json({ success: true, message: 'Game deleted' });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to delete' }, { status: 500 });
