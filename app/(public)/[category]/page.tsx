@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Navbar from '@/components/portal/Navbar';
+import Footer from '@/components/portal/Footer';
 import GameCard from '@/components/portal/GameCard';
 import { connectDB } from '@/lib/db';
 import CategoryModel from '@/lib/models/Category';
@@ -131,6 +132,7 @@ export default async function CategoryPage({ params }: Props) {
           </div>
         </section>
       </main>
+      <Footer />
     </>
   );
 }

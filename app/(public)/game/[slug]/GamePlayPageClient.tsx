@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Navbar from '@/components/portal/Navbar';
 import GameCard from '@/components/portal/GameCard';
+import Footer from '@/components/portal/Footer';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
 
@@ -540,6 +541,7 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
           </div>
         </div>
       )}
+      <Footer />
     </>
   );
 }

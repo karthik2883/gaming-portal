@@ -3,6 +3,7 @@ import Navbar from '@/components/portal/Navbar';
 import GameCard from '@/components/portal/GameCard';
 import AdSkyscrapers from '@/components/portal/AdSkyscrapers';
 import GridAdCard from '@/components/portal/GridAdCard';
+import Footer from '@/components/portal/Footer';
 import styles from './page.module.css';
 import Link from 'next/link';
 import { connectDB } from '@/lib/db';
@@ -375,22 +376,7 @@ export default async function HomePage({
       </main>
 
       {/* Footer */}
-      <footer className={styles.footer}>
-        <div className="container">
-          <div className={styles.footerContent}>
-            <div className={styles.footerBrand}>
-              <img src="/fliptrip_logo.png" alt="FlipTrip Games" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'contain' }} />
-              <span className={styles.footerLogo}>
-                <span className="text-gradient-cyan">FlipTrip</span>
-                <span style={{ color: '#a78bfa' }}> Games</span>
-              </span>
-            </div>
-            <p className={styles.footerText}>
-              &copy; 2026 FlipTrip Games. Play free online games, no download required.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }
