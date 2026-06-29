@@ -41,6 +41,13 @@ const nextConfig = {
         ],
       },
       {
+        // Cache icons and logos at the root level aggressively
+        source: '/:file(fliptrip_favicon.png|fliptrip_logo.png|favicon.ico|favicon.png|manifest.json)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
+        ],
+      },
+      {
         source: '/thumbnails/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },

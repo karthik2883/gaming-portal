@@ -1,6 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
-
-/* Fonts loaded via <link> in layout.tsx for non-blocking performance */
+/* Fonts loaded via <link> or next/font for non-blocking performance */
 
 /* =============================================
    CSS VARIABLES — Clean Light Design System
