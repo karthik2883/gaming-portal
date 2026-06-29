@@ -32,11 +32,13 @@ async function getCategoryData(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await getCategoryData(params.category);
-  const title = category ? `${category.name} Games — FlipTrip Games` : 'Category — FlipTrip Games';
-  const description = category?.description || `Play free ${params.category} games online. No downloads required!`;
+  const title = category?.seoTitle || (category ? `${category.name} Games — FlipTrip Games` : 'Category — FlipTrip Games');
+  const description = category?.seoDescription || category?.description || `Play free ${params.category} games online. No downloads required!`;
+  const keywords = category?.seoKeywords || `${params.category}, free games, online games`;
   return {
     title,
     description,
+    keywords,
     openGraph: {
       title,
       description,
