@@ -4,109 +4,341 @@
  *
  * Goal  : Slide the RED block right to the exit arrow.
  * Rules : Horizontal blocks slide left/right; vertical blocks slide up/down.
- * Input : Click/tap a block to select it, then drag it — or tap an empty cell
- *         in the valid direction to snap-slide it as far as it can go.
+ * Input : Click/tap a block to select it, then drag it.
  */
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const GRID  = 6;
+const GRID = 6;
 const EXIT_ROW = 2;
 
 // ─── Level definitions ────────────────────────────────────────────────────────
 // Each block: { r, c, len, dir:'H'|'V', isTarget? }
 // Target block is always H at r=2 and exits through the right wall.
-// Solutions are noted in comments (each step = one "move").
 const LEVELS = [
-  // ── Level 1 – 2 moves ──────────────────────────────────────────────────────
-  // Slide V1 up 2, red right → exit
-  { label:'Level 1', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:2, c:3, len:2, dir:'V' },  // up 2 → r:0-1
-  ]},
-
-  // ── Level 2 – 3 moves ──────────────────────────────────────────────────────
-  // V1 up 1, V2 down 2, red right
-  { label:'Level 2', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:1, c:2, len:2, dir:'V' },  // up 1 → r:0-1
-    { r:2, c:4, len:2, dir:'V' },  // down 2 → r:4-5
-  ]},
-
-  // ── Level 3 – 4 moves ──────────────────────────────────────────────────────
-  // V1 up 1, V2 down 2, V3 down 2, red right
-  { label:'Level 3', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:1, c:2, len:2, dir:'V' },  // up 1 → r:0-1
-    { r:2, c:4, len:2, dir:'V' },  // down 2 → r:4-5
-    { r:2, c:5, len:2, dir:'V' },  // up 2 → r:0-1
-  ]},
-
-  // ── Level 4 – 4 moves ──────────────────────────────────────────────────────
-  // H1 left 2 (frees path below V1), V1 down 3, V2 down 2, red right
-  { label:'Level 4', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:0, c:2, len:3, dir:'V' },  // blocked below by H1; slides down 3 after H1 moves
-    { r:3, c:2, len:2, dir:'H' },  // H1: left 2 → c:0-1 (frees r:3,c:2)
-    { r:2, c:4, len:2, dir:'V' },  // down 2 → r:4-5
-  ]},
-
-  // ── Level 5 – 5 moves ──────────────────────────────────────────────────────
-  // H1 left 2, V1 down 3, V2 down 2, V3 down 2, red right
-  { label:'Level 5', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:0, c:2, len:3, dir:'V' },  // blocked below; down 3 after H1 moves
-    { r:3, c:2, len:2, dir:'H' },  // H1: left 2
-    { r:2, c:4, len:2, dir:'V' },  // down 2
-    { r:2, c:5, len:2, dir:'V' },  // down 2 → r:4-5
-  ]},
-
-  // ── Level 6 – 5 moves ──────────────────────────────────────────────────────
-  // H1 right 1 (frees r:3,c:3), V1 down 3, V2 up 1, V3 down 2, red right
-  { label:'Level 6', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:0, c:3, len:3, dir:'V' },  // V1 blocked below by H1; down 3 after H1 right
-    { r:3, c:3, len:2, dir:'H' },  // H1 at c:3-4; right 1 → c:4-5, frees r:3,c:3
-    { r:1, c:2, len:2, dir:'V' },  // V2 up 1 → r:0-1
-    { r:2, c:5, len:2, dir:'V' },  // V3 down 2 → r:4-5
-  ]},
-
-  // ── Level 7 – 6 moves ──────────────────────────────────────────────────────
-  // V2 up 2, H1 right 1 (frees r:3,c:3), V1 down 3, V3 down 2, V4 down 2, red right
-  { label:'Level 7', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:0, c:3, len:3, dir:'V' },  // V1 blocked; down 3 after H1 right
-    { r:3, c:3, len:2, dir:'H' },  // H1 blocked by V2; H1 right 1 after V2 up
-    { r:2, c:4, len:2, dir:'V' },  // V2 blocks H1 right; up 2 → r:0-1
-    { r:1, c:2, len:2, dir:'V' },  // V3 up 1 → r:0-1
-    { r:2, c:5, len:2, dir:'V' },  // V4 down 2 → r:4-5
-  ]},
-
-  // ── Level 8 – 7 moves (Expert) ─────────────────────────────────────────────
-  // V2 up 2, H1 right 1, V1 down 3, V3 up 1, H2 right 2, V4 down 2, red right
-  { label:'Level 8', blocks:[
-    { r:2, c:0, len:2, dir:'H', isTarget:true },
-    { r:0, c:3, len:3, dir:'V' },  // V1: down 3 after H1 moves
-    { r:3, c:3, len:2, dir:'H' },  // H1: blocked by V2; right 1 after V2
-    { r:2, c:4, len:2, dir:'V' },  // V2: up 2 → r:0-1 to free H1
-    { r:1, c:2, len:2, dir:'V' },  // V3: up 1 → r:0-1
-    { r:4, c:2, len:3, dir:'H' },  // H2: right 2 → c:3-5
-    { r:2, c:5, len:2, dir:'V' },  // V4: down 2 → r:4-5 (H2 at r:4 at c:3+ after move)
-  ]},
+  {
+    label: 'Level 1',
+    difficulty: 'Easy',
+    par: 3,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 3, len: 3, dir: 'V' },
+      { r: 3, c: 3, len: 2, dir: 'H' }
+    ]
+  },
+  {
+    label: 'Level 2',
+    difficulty: 'Easy',
+    par: 5,
+    blocks: [
+      { r: 2, c: 0, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 2, len: 3, dir: 'V' },
+      { r: 3, c: 2, len: 2, dir: 'H' },
+      { r: 2, c: 4, len: 3, dir: 'V' }
+    ]
+  },
+  {
+    label: 'Level 3',
+    difficulty: 'Easy',
+    par: 6,
+    blocks: [
+      { r: 2, c: 0, len: 2, dir: 'H', isTarget: true },
+      { r: 1, c: 2, len: 2, dir: 'V' },
+      { r: 2, c: 4, len: 2, dir: 'V' },
+      { r: 2, c: 5, len: 2, dir: 'V' }
+    ]
+  },
+  {
+    label: 'Level 4',
+    difficulty: 'Medium',
+    par: 8,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 2, dir: 'V' },
+      { r: 1, c: 3, len: 3, dir: 'V' },
+      { r: 4, c: 1, len: 3, dir: 'H' },
+      { r: 2, c: 4, len: 2, dir: 'V' }
+    ]
+  },
+  {
+    label: 'Level 5',
+    difficulty: 'Medium',
+    par: 10,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 3, len: 3, dir: 'V' },
+      { r: 0, c: 4, len: 2, dir: 'V' },
+      { r: 3, c: 1, len: 2, dir: 'H' },
+      { r: 4, c: 3, len: 3, dir: 'H' },
+      { r: 1, c: 0, len: 3, dir: 'V' }
+    ]
+  },
+  {
+    label: 'Level 6',
+    difficulty: 'Medium',
+    par: 12,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 3, dir: 'V' },
+      { r: 0, c: 3, len: 2, dir: 'V' },
+      { r: 0, c: 4, len: 2, dir: 'H' },
+      { r: 1, c: 5, len: 3, dir: 'V' },
+      { r: 3, c: 1, len: 2, dir: 'H' },
+      { r: 4, c: 3, len: 2, dir: 'V' }
+    ]
+  },
+  {
+    label: 'Level 7',
+    difficulty: 'Hard',
+    par: 16,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 3, dir: 'V' },
+      { r: 0, c: 3, len: 2, dir: 'V' },
+      { r: 0, c: 4, len: 2, dir: 'H' },
+      { r: 1, c: 5, len: 3, dir: 'V' },
+      { r: 3, c: 1, len: 2, dir: 'H' },
+      { r: 4, c: 3, len: 2, dir: 'V' },
+      { r: 5, c: 0, len: 3, dir: 'H' }
+    ]
+  },
+  {
+    label: 'Level 8',
+    difficulty: 'Hard',
+    par: 21,
+    blocks: [
+      { r: 2, c: 2, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 2, dir: 'V' },
+      { r: 0, c: 1, len: 3, dir: 'H' },
+      { r: 0, c: 4, len: 3, dir: 'V' },
+      { r: 1, c: 1, len: 2, dir: 'V' },
+      { r: 3, c: 0, len: 2, dir: 'H' },
+      { r: 3, c: 2, len: 3, dir: 'V' },
+      { r: 4, c: 3, len: 2, dir: 'H' },
+      { r: 5, c: 3, len: 3, dir: 'H' }
+    ]
+  },
+  {
+    label: 'Level 9',
+    difficulty: 'Hard',
+    par: 25,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 3, dir: 'V' },
+      { r: 0, c: 1, len: 2, dir: 'H' },
+      { r: 0, c: 3, len: 3, dir: 'V' },
+      { r: 0, c: 4, len: 2, dir: 'H' },
+      { r: 1, c: 5, len: 3, dir: 'V' },
+      { r: 3, c: 0, len: 3, dir: 'H' },
+      { r: 4, c: 0, len: 2, dir: 'V' },
+      { r: 4, c: 1, len: 2, dir: 'H' },
+      { r: 4, c: 4, len: 2, dir: 'V' },
+      { r: 5, c: 1, len: 3, dir: 'H' }
+    ]
+  },
+  {
+    label: 'Level 10',
+    difficulty: 'Expert',
+    par: 30,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 3, dir: 'V' },
+      { r: 0, c: 1, len: 2, dir: 'H' },
+      { r: 0, c: 3, len: 3, dir: 'V' },
+      { r: 0, c: 4, len: 2, dir: 'H' },
+      { r: 1, c: 5, len: 3, dir: 'V' },
+      { r: 3, c: 1, len: 2, dir: 'H' },
+      { r: 3, c: 4, len: 2, dir: 'V' },
+      { r: 4, c: 1, len: 3, dir: 'H' },
+      { r: 4, c: 0, len: 2, dir: 'V' },
+      { r: 5, c: 1, len: 3, dir: 'H' }
+    ]
+  },
+  {
+    label: 'Level 11',
+    difficulty: 'Expert',
+    par: 36,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 3, dir: 'V' },
+      { r: 0, c: 1, len: 3, dir: 'H' },
+      { r: 0, c: 4, len: 2, dir: 'V' },
+      { r: 0, c: 5, len: 2, dir: 'V' },
+      { r: 1, c: 1, len: 2, dir: 'V' },
+      { r: 3, c: 0, len: 2, dir: 'H' },
+      { r: 3, c: 2, len: 3, dir: 'V' },
+      { r: 3, c: 3, len: 3, dir: 'V' },
+      { r: 4, c: 4, len: 2, dir: 'H' },
+      { r: 5, c: 0, len: 2, dir: 'H' }
+    ]
+  },
+  {
+    label: 'Level 12',
+    difficulty: 'Expert',
+    par: 42,
+    blocks: [
+      { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
+      { r: 0, c: 0, len: 3, dir: 'V' },
+      { r: 0, c: 1, len: 2, dir: 'H' },
+      { r: 0, c: 3, len: 3, dir: 'V' },
+      { r: 0, c: 4, len: 2, dir: 'H' },
+      { r: 1, c: 5, len: 3, dir: 'V' },
+      { r: 3, c: 0, len: 2, dir: 'H' },
+      { r: 3, c: 2, len: 2, dir: 'V' },
+      { r: 3, c: 3, len: 2, dir: 'V' },
+      { r: 4, c: 4, len: 2, dir: 'H' },
+      { r: 5, c: 0, len: 3, dir: 'H' }
+    ]
+  }
 ];
-
-// ─── Block colours ────────────────────────────────────────────────────────────
-const WOOD_LIGHT  = 0xd4a574;
-const WOOD_MID    = 0xb8864e;
-const WOOD_DARK   = 0x8b6239;
-const TARGET_MID  = 0xe74c3c;
-const TARGET_LHT  = 0xf1948a;
-const TARGET_DRK  = 0xc0392b;
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default class UnblockMeFactory {
   static create(PhaserLib: any) {
 
-    return class UnblockMeScene extends PhaserLib.Scene {
+    // ────────────────────────────────────────────────────────────────────────
+    //  SCENE 1: Level Select Menu Scene
+    // ────────────────────────────────────────────────────────────────────────
+    class UnblockMeMenu extends PhaserLib.Scene {
+      audioCtx: AudioContext | null = null;
+
+      constructor() { super({ key: 'UnblockMeMenu' }); }
+
+      create() {
+        const W = this.scale.width;
+        const H = this.scale.height;
+
+        // Dark cyber space background
+        this.add.rectangle(W / 2, H / 2, W, H, 0x05040d);
+
+        // Dot grid background texture
+        const makeTexture = (key: string, w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void) => {
+          if (this.textures.exists(key)) this.textures.remove(key);
+          const t = this.textures.createCanvas(key, w, h);
+          draw(t.context);
+          t.refresh();
+        };
+
+        makeTexture('menu-dots-bg', 20, 20, (ctx) => {
+          ctx.fillStyle = 'rgba(0, 212, 255, 0.04)';
+          ctx.beginPath();
+          ctx.arc(10, 10, 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        this.add.tileSprite(W / 2, H / 2, W, H, 'menu-dots-bg');
+
+        // Header Title
+        const title = this.add.text(W / 2, 48, '🔓 UNBLOCK NEO', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '30px', color: '#ff00aa', fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: title,
+          alpha: 0.8,
+          scaleX: 1.03,
+          scaleY: 1.03,
+          yoyo: true,
+          duration: 1000,
+          loop: -1,
+          ease: 'Sine.easeInOut'
+        });
+
+        this.add.text(W / 2, 90, 'SLIDE THE MAGENTA BLOCK TO THE PULSING EXIT', {
+          fontFamily: 'monospace', fontSize: '10px', color: '#687e9c', letterSpacing: 1
+        }).setOrigin(0.5);
+
+        // Grid parameters (3 rows of 4 items)
+        const tW = 120;
+        const tH = 80;
+        const gapX = 24;
+        const gapY = 24;
+        const startX = W / 2 - (4 * tW + 3 * gapX) / 2 + tW / 2;
+        const startY = 165;
+
+        LEVELS.forEach((level, i) => {
+          const col = i % 4;
+          const row = Math.floor(i / 4);
+          const lx = startX + col * (tW + gapX);
+          const ly = startY + row * (tH + gapY + 16);
+
+          // Star count from local storage
+          const stars = parseInt(localStorage.getItem(`unblock-me-level-stars-${i}`) || '0');
+
+          // Draw Card
+          const cardGfx = this.add.graphics();
+          const drawCard = (isHover: boolean) => {
+            cardGfx.clear();
+            if (isHover) {
+              cardGfx.fillStyle(0x0a1a2b, 0.95);
+              cardGfx.lineStyle(2, 0x00d4ff, 1);
+            } else {
+              cardGfx.fillStyle(0x070615, 0.85);
+              cardGfx.lineStyle(1.5, 0x1f1d3e, 0.6);
+            }
+            cardGfx.fillRoundedRect(lx - tW / 2, ly - tH / 2, tW, tH, 10);
+            cardGfx.strokeRoundedRect(lx - tW / 2, ly - tH / 2, tW, tH, 10);
+          };
+          drawCard(false);
+
+          // Level Number text
+          const numText = this.add.text(lx, ly - 8, `${i + 1}`, {
+            fontFamily: 'Orbitron, sans-serif', fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
+          }).setOrigin(0.5);
+
+          // Difficulty Label
+          let diffColor = '#2ecc71';
+          if (level.difficulty === 'Medium') diffColor = '#e67e22';
+          else if (level.difficulty === 'Hard') diffColor = '#e74c3c';
+          else if (level.difficulty === 'Expert') diffColor = '#ff00aa';
+
+          this.add.text(lx, ly - tH / 2 + 12, level.difficulty.toUpperCase(), {
+            fontFamily: 'monospace', fontSize: '8px', color: diffColor, fontStyle: 'bold'
+          }).setOrigin(0.5);
+
+          // Star Text character block
+          const starStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+          const starText = this.add.text(lx, ly + 20, starStr, {
+            fontFamily: 'Orbitron, sans-serif', fontSize: '11px', color: stars > 0 ? '#ffd700' : '#3e3b5e'
+          }).setOrigin(0.5);
+
+          // Click Zone
+          const zone = this.add.zone(lx, ly, tW, tH).setInteractive({ cursor: 'pointer' });
+          zone.on('pointerover', () => {
+            drawCard(true);
+            numText.setColor('#00d4ff');
+            this.playTone(340, 'sine', 0.05, 0.05);
+          });
+          zone.on('pointerout', () => {
+            drawCard(false);
+            numText.setColor('#ffffff');
+          });
+          zone.on('pointerdown', () => {
+            this.playTone(450, 'sine', 0.08, 0.06);
+            this.scene.start('UnblockMe', { level: i });
+          });
+        });
+      }
+
+      playTone(freq: number, type: string = 'sine', duration: number = 0.1, vol: number = 0.08) {
+        try {
+          if (!this.audioCtx) this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const osc = this.audioCtx.createOscillator();
+          const gain = this.audioCtx.createGain();
+          osc.type = type as any;
+          osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+          gain.gain.setValueAtTime(vol, this.audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.audioCtx.destination);
+          osc.start();
+          osc.stop(this.audioCtx.currentTime + duration);
+        } catch (e) {}
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    //  SCENE 2: Main Gameplay Scene
+    // ────────────────────────────────────────────────────────────────────────
+    class UnblockMeScene extends PhaserLib.Scene {
       // ── State ──────────────────────────────────────────────────────────────
       blocks!:     any[];
       level!:      number;
@@ -120,6 +352,8 @@ export default class UnblockMeFactory {
       boardGfx!:   any;
       blockCtrs!:  any[];   // one Phaser Container per block
       movesText!:  any;
+      parText!:    any;
+      exitArrow!:  any;
 
       // ── Drag state ─────────────────────────────────────────────────────────
       dragging!:      boolean;
@@ -130,6 +364,9 @@ export default class UnblockMeFactory {
       maxDragNeg!:    number;
       dragOffsetPx!:  number;
 
+      // Audio
+      audioCtx: AudioContext | null = null;
+
       constructor() { super({ key: 'UnblockMe' }); }
 
       init(data: any) {
@@ -138,7 +375,6 @@ export default class UnblockMeFactory {
         this.won   = false;
       }
 
-      // ──────────────────────────────────────────────────────────────────────
       create() {
         const W = this.scale.width;
         const H = this.scale.height;
@@ -150,22 +386,54 @@ export default class UnblockMeFactory {
         // Deep-clone level blocks
         this.blocks = LEVELS[this.level].blocks.map((b: any) => ({ ...b }));
 
-        // Cell size: fill canvas leaving room for HUD + buttons
-        const TOP = 80, BOT = 52;
+        // Cell size configuration
+        const TOP = 80, BOT = 60;
         const avail = Math.min(W - 16, H - TOP - BOT);
         this.CELL = Math.floor(avail / GRID);
         const gridPx = this.CELL * GRID;
         this.gridX = Math.floor((W - gridPx) / 2);
         this.gridY = TOP;
 
-        // ── Background ──────────────────────────────────────────────────────
-        const bg = this.add.graphics();
-        bg.fillStyle(0xfdf3e3, 1);
-        bg.fillRect(0, 0, W, H);
+        // Web Audio Context
+        try { this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)(); } catch {}
+
+        // ── Background (Space Neo) ───────────────────────────────────────────
+        this.add.rectangle(W / 2, H / 2, W, H, 0x05040d);
+
+        // Dot grid background texture
+        const makeTexture = (key: string, w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void) => {
+          if (this.textures.exists(key)) this.textures.remove(key);
+          const t = this.textures.createCanvas(key, w, h);
+          draw(t.context);
+          t.refresh();
+        };
+
+        makeTexture('game-dots-bg', 20, 20, (ctx) => {
+          ctx.fillStyle = 'rgba(0, 212, 255, 0.04)';
+          ctx.beginPath();
+          ctx.arc(10, 10, 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        this.add.tileSprite(W / 2, H / 2, W, H, 'game-dots-bg');
 
         // ── Board ───────────────────────────────────────────────────────────
         this.boardGfx = this.add.graphics();
         this.redrawBoard();
+
+        // Pulsing exit arrow at Row 2 right wall
+        this.exitArrow = this.add.graphics();
+        this.exitArrow.fillStyle(0xff00aa, 1);
+        const ax = this.gridX + gridPx + 8;
+        const ay = this.gridY + EXIT_ROW * this.CELL + this.CELL / 2;
+        this.exitArrow.fillTriangle(ax, ay - 10, ax, ay + 10, ax + 12, ay);
+        this.tweens.add({
+          targets: this.exitArrow,
+          alpha: 0.3,
+          duration: 850,
+          yoyo: true,
+          loop: -1,
+          ease: 'Sine.easeInOut'
+        });
 
         // ── Block containers ────────────────────────────────────────────────
         this.blocks.forEach((block: any, i: number) => {
@@ -179,38 +447,84 @@ export default class UnblockMeFactory {
           this.blockCtrs.push(ctr);
         });
 
-        // ── HUD ─────────────────────────────────────────────────────────────
-        this.add.text(W / 2, 14, '🔓 Unblock Me', {
-          fontFamily: 'Inter, Arial, sans-serif',
-          fontSize: '16px', fontStyle: 'bold', color: '#4a3520',
-        }).setOrigin(0.5, 0);
-
-        this.add.text(14, 16, LEVELS[this.level].label, {
-          fontFamily: 'Inter, Arial, sans-serif', fontSize: '12px', color: '#7a5c3a',
+        // ── HUD (High Contrast Orbitron styling) ─────────────────────────────
+        const levelData = LEVELS[this.level];
+        this.add.text(16, 15, `${levelData.label.toUpperCase()}`, {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '13px', fontStyle: 'bold', color: '#ff00aa',
+        });
+        this.add.text(16, 32, `${levelData.difficulty.toUpperCase()}  •  PAR: ${levelData.par}`, {
+          fontFamily: 'monospace', fontSize: '9px', color: '#687e9c',
         });
 
-        this.movesText = this.add.text(W - 14, 16, 'Moves: 0', {
-          fontFamily: 'Inter, Arial, sans-serif', fontSize: '12px', color: '#7a5c3a',
-        }).setOrigin(1, 0);
+        this.movesText = this.add.text(W - 16, 20, 'MOVES: 0', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#00d4ff',
+        }).setOrigin(1, 0.5);
 
-        // ── Bottom buttons ───────────────────────────────────────────────────
-        const mkBtn = (label: string, x: number, color: string, cb: () => void) => {
-          const btn = this.add.text(x, H - 12, label, {
-            fontFamily: 'Inter, Arial, sans-serif',
-            fontSize: '12px', color: '#fff',
-            backgroundColor: color, padding: { x: 12, y: 6 },
-          }).setOrigin(0.5, 1).setInteractive({ useHandCursor: true });
-          btn.on('pointerdown', cb);
-          btn.on('pointerover', () => btn.setAlpha(0.8));
-          btn.on('pointerout',  () => btn.setAlpha(1));
-          return btn;
+        // ── Controls Toolbar (Centered Glowing Buttons) ──────────────────────
+        const btnW = 110;
+        const btnH = 34;
+        const bY = H - 30;
+
+        const drawBtn = (gfx: any, x: number, y: number, color: number, isHover: boolean, isActive: boolean) => {
+          gfx.clear();
+          if (isActive) {
+            gfx.fillStyle(color, 0.35);
+            gfx.lineStyle(2.5, color, 1);
+          } else if (isHover) {
+            gfx.fillStyle(color, 0.2);
+            gfx.lineStyle(2.5, color, 1);
+          } else {
+            gfx.fillStyle(0x070612, 0.9);
+            gfx.lineStyle(1.8, color, 0.45);
+          }
+          gfx.fillRoundedRect(x - btnW / 2, y - btnH / 2, btnW, btnH, 8);
+          gfx.strokeRoundedRect(x - btnW / 2, y - btnH / 2, btnW, btnH, 8);
         };
 
-        mkBtn('🔄 Restart', W / 2 - 46, '#7a5c3a', () => {
-          if (!this.dragging) this.scene.restart({ level: this.level });
+        // 1. MENU Button
+        const menuX = W / 2 - 70;
+        const btnMenu = this.add.graphics();
+        drawBtn(btnMenu, menuX, bY, 0x00d4ff, false, false);
+        const txtMenu = this.add.text(menuX, bY, '⌂ MENU', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '10.5px', color: '#ffffff', fontStyle: 'bold',
+        }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+
+        txtMenu.on('pointerover', () => {
+          drawBtn(btnMenu, menuX, bY, 0x00d4ff, true, false);
         });
-        mkBtn('⏭ Skip',    W / 2 + 46, '#aaa', () => {
-          this.scene.restart({ level: (this.level + 1) % LEVELS.length });
+        txtMenu.on('pointerout', () => {
+          drawBtn(btnMenu, menuX, bY, 0x00d4ff, false, false);
+        });
+        txtMenu.on('pointerdown', () => {
+          drawBtn(btnMenu, menuX, bY, 0x00d4ff, true, true);
+          this.playTone(400, 'sine', 0.08, 0.05);
+          this.scene.start('UnblockMeMenu');
+        });
+        txtMenu.on('pointerup', () => {
+          drawBtn(btnMenu, menuX, bY, 0x00d4ff, true, false);
+        });
+
+        // 2. RESTART Button
+        const restartX = W / 2 + 70;
+        const btnRestart = this.add.graphics();
+        drawBtn(btnRestart, restartX, bY, 0xff00aa, false, false);
+        const txtRestart = this.add.text(restartX, bY, '🔄 RESTART', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '10.5px', color: '#ffffff', fontStyle: 'bold',
+        }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+
+        txtRestart.on('pointerover', () => {
+          drawBtn(btnRestart, restartX, bY, 0xff00aa, true, false);
+        });
+        txtRestart.on('pointerout', () => {
+          drawBtn(btnRestart, restartX, bY, 0xff00aa, false, false);
+        });
+        txtRestart.on('pointerdown', () => {
+          drawBtn(btnRestart, restartX, bY, 0xff00aa, true, true);
+          this.playTone(400, 'sine', 0.08, 0.05);
+          this.scene.restart({ level: this.level });
+        });
+        txtRestart.on('pointerup', () => {
+          drawBtn(btnRestart, restartX, bY, 0xff00aa, true, false);
         });
 
         // ── Input ────────────────────────────────────────────────────────────
@@ -219,9 +533,6 @@ export default class UnblockMeFactory {
         this.input.on('pointerup',   this.onUp,   this);
       }
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Board drawing
-      // ──────────────────────────────────────────────────────────────────────
       redrawBoard() {
         const g  = this.boardGfx;
         const ox = this.gridX, oy = this.gridY;
@@ -229,88 +540,71 @@ export default class UnblockMeFactory {
         const px = C * GRID;
         g.clear();
 
-        // Outer wood frame
-        g.fillStyle(0xc19a6b, 1);
-        g.fillRoundedRect(ox - 10, oy - 10, px + 20, px + 20, 10);
+        // Translucent glass base shadow
+        g.fillStyle(0x000000, 0.35);
+        g.fillRoundedRect(ox - 6, oy - 6, px + 12, px + 12, 10);
 
-        // Board face
-        g.fillStyle(0xf5deb3, 1);
-        g.fillRect(ox, oy, px, px);
+        // Glass board container
+        g.fillStyle(0x0a0918, 0.85);
+        g.fillRoundedRect(ox - 4, oy - 4, px + 8, px + 8, 10);
+        g.lineStyle(2, 0x1f1d3e, 0.7);
+        g.strokeRoundedRect(ox - 4, oy - 4, px + 8, px + 8, 10);
 
-        // Cell lines
-        g.lineStyle(1, 0xd4a76a, 0.35);
-        for (let i = 0; i <= GRID; i++) {
+        // Inner board grid cell lines
+        g.lineStyle(1, 0x1a1930, 0.45);
+        for (let i = 1; i < GRID; i++) {
           g.lineBetween(ox + i * C, oy, ox + i * C, oy + px);
           g.lineBetween(ox, oy + i * C, ox + px, oy + i * C);
         }
 
-        // Board border
-        g.lineStyle(2, 0xb8864e, 1);
-        g.strokeRect(ox, oy, px, px);
-
-        // Exit gap + arrow (right side, EXIT_ROW)
+        // Remove right border line locally for the exit
         const ey = oy + EXIT_ROW * C;
-        g.fillStyle(0xfdf3e3, 1);
-        g.fillRect(ox + px, ey + 2, 14, C - 4); // cover border
-
-        g.fillStyle(0xe74c3c, 0.85);
-        // Arrow triangle
-        const ax = ox + px + 14;
-        const ay = ey + C / 2;
-        g.fillTriangle(ax - 2, ay - 9, ax - 2, ay + 9, ax + 10, ay);
+        g.lineStyle(2, 0xff00aa, 0.4);
+        g.lineBetween(ox + px, oy, ox + px, ey);
+        g.lineBetween(ox + px, ey + C, ox + px, oy + px);
       }
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Block drawing (into a Graphics at 0,0 relative to container)
-      // ──────────────────────────────────────────────────────────────────────
       drawBlockGfx(gfx: any, block: any, selectedAlpha: number) {
         gfx.clear();
 
         const C   = this.CELL;
-        const M   = 4; // margin
+        const M   = 3; // margin
         const bw  = block.dir === 'H' ? block.len * C : C;
         const bh  = block.dir === 'V' ? block.len * C : C;
-        const mid = block.isTarget ? TARGET_MID : WOOD_MID;
-        const lht = block.isTarget ? TARGET_LHT : WOOD_LIGHT;
-        const drk = block.isTarget ? TARGET_DRK : WOOD_DARK;
 
-        // Shadow
-        gfx.fillStyle(0x000000, 0.18);
-        gfx.fillRoundedRect(M + 2, M + 2, bw - M * 2, bh - M * 2, 7);
+        const mainColor = block.isTarget ? 0xff00aa : 0x00d4ff; // pink neon / cyan neon
+        const bodyColor = block.isTarget ? 0x220516 : 0x051b24; // dark magenta / dark teal glass
 
-        // Body
-        gfx.fillStyle(mid, 1);
-        gfx.fillRoundedRect(M, M, bw - M * 2, bh - M * 2, 7);
-
-        // Top-left highlight
-        gfx.fillStyle(lht, 0.65);
-        gfx.fillRoundedRect(M + 4, M + 4, (bw - M * 2) * 0.55, Math.min(14, (bh - M * 2) / 3), 4);
-
-        // Bottom-right shadow strip
-        gfx.fillStyle(drk, 0.45);
-        gfx.fillRoundedRect(M + 4, bh - M - 10, bw - M * 2 - 8, 7, 3);
-
-        // Wood grain (non-target only)
-        if (!block.isTarget) {
-          gfx.lineStyle(1, WOOD_DARK, 0.12);
-          if (block.dir === 'H') {
-            for (let x = M + 14; x < bw - M - 4; x += 18) {
-              gfx.lineBetween(x, M + 6, x + 6, bh - M - 6);
-            }
-          } else {
-            for (let y = M + 14; y < bh - M - 4; y += 18) {
-              gfx.lineBetween(M + 6, y, bw - M - 6, y + 6);
-            }
-          }
+        // Shadow glow
+        if (selectedAlpha > 0) {
+          gfx.fillStyle(mainColor, 0.12);
+          gfx.fillRoundedRect(M - 4, M - 4, bw - M * 2 + 8, bh - M * 2 + 8, 8);
+        } else {
+          gfx.fillStyle(0x000000, 0.35);
+          gfx.fillRoundedRect(M + 3, M + 3, bw - M * 2, bh - M * 2, 8);
         }
 
-        // Border
-        gfx.lineStyle(selectedAlpha > 0 ? 2.5 : 1.5, selectedAlpha > 0 ? 0xf1c40f : drk, 1);
-        gfx.strokeRoundedRect(M, M, bw - M * 2, bh - M * 2, 7);
+        // Translucent Glass Body
+        gfx.fillStyle(bodyColor, 0.9);
+        gfx.fillRoundedRect(M, M, bw - M * 2, bh - M * 2, 8);
+
+        // Core/Circuit design inside the block
+        gfx.lineStyle(1.5, mainColor, 0.25);
+        if (block.dir === 'H') {
+          gfx.lineBetween(M + 12, bh / 2, bw - M - 12, bh / 2);
+          gfx.lineBetween(bw / 2, M + 6, bw / 2, bh - M - 6);
+        } else {
+          gfx.lineBetween(bw / 2, M + 12, bw / 2, bh - M - 12);
+          gfx.lineBetween(M + 6, bh / 2, bw - M - 6, bh / 2);
+        }
+
+        // Glowing border stroke
+        gfx.lineStyle(selectedAlpha > 0 ? 2.5 : 1.8, mainColor, selectedAlpha > 0 ? 1 : 0.7);
+        gfx.strokeRoundedRect(M, M, bw - M * 2, bh - M * 2, 8);
 
         // Selection ring
         if (selectedAlpha > 0) {
-          gfx.lineStyle(1.5, 0xf1c40f, 0.5);
+          gfx.lineStyle(1.5, mainColor, 0.4);
           gfx.strokeRoundedRect(M - 3, M - 3, bw - M * 2 + 6, bh - M * 2 + 6, 10);
         }
       }
@@ -321,9 +615,6 @@ export default class UnblockMeFactory {
         this.drawBlockGfx(gfx, this.blocks[i], selected ? 1 : 0);
       }
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Grid helpers
-      // ──────────────────────────────────────────────────────────────────────
       buildGrid(excludeIdx = -1): number[][] {
         const g = Array.from({ length: GRID }, () => Array(GRID).fill(-1));
         this.blocks.forEach((b: any, i: number) => {
@@ -351,7 +642,6 @@ export default class UnblockMeFactory {
           for (let c = b.c - 1; c >= 0; c--) {
             if (grid[b.r][c] !== -1) break; neg++;
           }
-          // right — target may exit one step beyond col 5
           const maxC = b.isTarget ? GRID : GRID - b.len;
           for (let c = b.c + b.len; c <= maxC; c++) {
             if (c < GRID && grid[b.r][c] !== -1) break;
@@ -369,9 +659,6 @@ export default class UnblockMeFactory {
         return { pos, neg };
       }
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Input
-      // ──────────────────────────────────────────────────────────────────────
       onDown(ptr: any) {
         if (this.won) return;
         const col = Math.floor((ptr.x - this.gridX) / this.CELL);
@@ -379,7 +666,6 @@ export default class UnblockMeFactory {
         const hit = this.getBlockAt(row, col);
 
         if (hit !== -1) {
-          // Start drag
           this.dragging      = true;
           this.dragIdx       = hit;
           const b            = this.blocks[hit];
@@ -390,6 +676,7 @@ export default class UnblockMeFactory {
           this.maxDragPos    = pos;
           this.maxDragNeg    = neg;
           this.redrawBlockGraphic(hit, true);
+          this.playTone(280, 'sine', 0.05, 0.04);
         }
       }
 
@@ -405,7 +692,6 @@ export default class UnblockMeFactory {
 
         this.dragOffsetPx = rawPx;
 
-        // Move container visually
         const ctr = this.blockCtrs[this.dragIdx];
         if (b.dir === 'H') {
           ctr.x = this.gridX + b.c * this.CELL + rawPx;
@@ -430,10 +716,12 @@ export default class UnblockMeFactory {
 
         if (delta !== 0) {
           this.moves++;
-          this.movesText.setText(`Moves: ${this.moves}`);
+          this.movesText.setText(`MOVES: ${this.moves}`);
+          this.playTone(330, 'sine', 0.08, 0.05);
+        } else {
+          this.playTone(200, 'triangle', 0.05, 0.05);
         }
 
-        // Snap container to grid
         const ctr = this.blockCtrs[this.dragIdx];
         ctr.x = this.gridX + b.c * C;
         ctr.y = this.gridY + b.r * C;
@@ -445,18 +733,17 @@ export default class UnblockMeFactory {
         this.dragIdx       = -1;
         this.dragOffsetPx  = 0;
 
-        // Win detection: target's right edge is at or beyond col GRID
         if (b.isTarget && b.c + b.len > GRID - 1) {
           this.won = true;
           this.animateExit(prevIdx);
         }
       }
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Win sequence
-      // ──────────────────────────────────────────────────────────────────────
       animateExit(idx: number) {
         const ctr = this.blockCtrs[idx];
+        this.playTone(523, 'sine', 0.15, 0.08);
+        this.time.delayedCall(100, () => this.playTone(659, 'sine', 0.15, 0.08));
+
         this.tweens.add({
           targets: ctr,
           x: this.scale.width + 120,
@@ -473,52 +760,146 @@ export default class UnblockMeFactory {
         const W = this.scale.width;
         const H = this.scale.height;
 
-        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.55);
+        this.add.rectangle(W / 2, H / 2, W, H, 0x030208, 0.75);
 
+        // Glassmorphic Modal Box
         const box = this.add.graphics();
-        box.fillStyle(0xfff8f0, 1);
-        box.fillRoundedRect(W / 2 - 145, H / 2 - 92, 290, 184, 18);
-        box.lineStyle(2.5, 0xd4a76a, 1);
-        box.strokeRoundedRect(W / 2 - 145, H / 2 - 92, 290, 184, 18);
+        box.fillStyle(0x0b091c, 0.98);
+        box.lineStyle(2.5, 0xff00aa, 1);
+        box.fillRoundedRect(W / 2 - 160, H / 2 - 140, 320, 250, 16);
+        box.strokeRoundedRect(W / 2 - 160, H / 2 - 140, 320, 250, 16);
 
-        this.add.text(W / 2, H / 2 - 62, '🎉 Unblocked!', {
-          fontFamily: 'Inter, Arial, sans-serif',
-          fontSize: '22px', fontStyle: 'bold', color: '#4a3520',
-        }).setOrigin(0.5);
+        // Win Audio Fanfare
+        this.playTone(523, 'sine', 0.15, 0.08);
+        this.time.delayedCall(120, () => this.playTone(659, 'sine', 0.15, 0.08));
+        this.time.delayedCall(240, () => this.playTone(784, 'sine', 0.2, 0.08));
+        this.time.delayedCall(360, () => this.playTone(1046, 'sine', 0.35, 0.1));
 
-        this.add.text(W / 2, H / 2 - 28, `${LEVELS[this.level].label}  ·  ${this.moves} move${this.moves !== 1 ? 's' : ''}`, {
-          fontFamily: 'Inter, Arial, sans-serif', fontSize: '14px', color: '#7a5c3a',
-        }).setOrigin(0.5);
-
-        const hasNext = this.level + 1 < LEVELS.length;
-
-        if (hasNext) {
-          const nb = this.add.text(W / 2, H / 2 + 14, '▶  Next Level', {
-            fontFamily: 'Inter, Arial, sans-serif', fontSize: '14px', fontStyle: 'bold',
-            color: '#fff', backgroundColor: '#b8864e', padding: { x: 20, y: 10 },
-          }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-          nb.on('pointerover', () => nb.setAlpha(0.85));
-          nb.on('pointerout',  () => nb.setAlpha(1));
-          nb.on('pointerdown', () => this.scene.restart({ level: this.level + 1 }));
-        } else {
-          this.add.text(W / 2, H / 2 + 14, '🏆 All Levels Complete!', {
-            fontFamily: 'Inter, Arial, sans-serif',
-            fontSize: '14px', fontStyle: 'bold', color: '#e74c3c',
-          }).setOrigin(0.5);
+        // Rating Calculations
+        const levelData = LEVELS[this.level];
+        const par = levelData.par;
+        let stars = 1;
+        if (this.moves <= par) {
+          stars = 3;
+        } else if (this.moves <= par + 3) {
+          stars = 2;
         }
 
-        const rb = this.add.text(W / 2, H / 2 + (hasNext ? 62 : 52), '🔄 Play Again', {
-          fontFamily: 'Inter, Arial, sans-serif', fontSize: '12px',
-          color: '#7a5c3a', backgroundColor: '#f5deb3', padding: { x: 14, y: 7 },
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        rb.on('pointerdown', () => this.scene.restart({ level: 0 }));
+        // Save progress to local storage
+        const currentBest = parseInt(localStorage.getItem(`unblock-me-level-stars-${this.level}`) || '0');
+        if (stars > currentBest) {
+          localStorage.setItem(`unblock-me-level-stars-${this.level}`, stars.toString());
+        }
 
-        // Dispatch game over event for the leaderboard system
+        // Title
+        this.add.text(W / 2, H / 2 - 105, 'UNBLOCKED!', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#ff00aa',
+        }).setOrigin(0.5);
+
+        // Stars display (golden neon representation)
+        const starTextStr = '★ '.repeat(stars) + '☆ '.repeat(3 - stars);
+        const starObj = this.add.text(W / 2, H / 2 - 58, starTextStr.trim(), {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '32px', color: '#ffd700', fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+          targets: starObj,
+          scaleX: 1.15,
+          scaleY: 1.15,
+          yoyo: true,
+          duration: 350,
+          ease: 'Back.easeOut'
+        });
+
+        // Stats Display
+        this.add.text(W / 2, H / 2 - 14, `MOVES: ${this.moves}  •  PAR: ${par}`, {
+          fontFamily: 'monospace', fontSize: '11px', color: '#687e9c',
+        }).setOrigin(0.5);
+
+        // Modal Controls
+        const hasNext = this.level + 1 < LEVELS.length;
+        const btnW = 100;
+        const btnH = 34;
+
+        const drawModalBtn = (gfx: any, x: number, y: number, color: number, isHover: boolean) => {
+          gfx.clear();
+          if (isHover) {
+            gfx.fillStyle(color, 0.25);
+            gfx.lineStyle(2, color, 1);
+          } else {
+            gfx.fillStyle(0x0e0c20, 0.9);
+            gfx.lineStyle(1.5, color, 0.5);
+          }
+          gfx.fillRoundedRect(x - btnW / 2, y - btnH / 2, btnW, btnH, 8);
+          gfx.strokeRoundedRect(x - btnW / 2, y - btnH / 2, btnW, btnH, 8);
+        };
+
+        // 1. Menu Button
+        const mx = W / 2 - 90;
+        const my = H / 2 + 50;
+        const menuGfx = this.add.graphics();
+        drawModalBtn(menuGfx, mx, my, 0x00d4ff, false);
+        const menuTxt = this.add.text(mx, my, 'MENU', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '11px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+
+        menuTxt.on('pointerover', () => drawModalBtn(menuGfx, mx, my, 0x00d4ff, true));
+        menuTxt.on('pointerout',  () => drawModalBtn(menuGfx, mx, my, 0x00d4ff, false));
+        menuTxt.on('pointerdown', () => this.scene.start('UnblockMeMenu'));
+
+        // 2. Play Again / Restart Button
+        const rx = W / 2 + 90;
+        const ry = H / 2 + 50;
+        const restGfx = this.add.graphics();
+        drawModalBtn(restGfx, rx, ry, 0xff00aa, false);
+        const restTxt = this.add.text(rx, ry, 'REPLAY', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '11px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+
+        restTxt.on('pointerover', () => drawModalBtn(restGfx, rx, ry, 0xff00aa, true));
+        restTxt.on('pointerout',  () => drawModalBtn(restGfx, rx, ry, 0xff00aa, false));
+        restTxt.on('pointerdown', () => this.scene.restart({ level: this.level }));
+
+        // 3. Next Level Button (Bottom-centered if available)
+        if (hasNext) {
+          const nx = W / 2;
+          const ny = H / 2 + 95;
+          const nextGfx = this.add.graphics();
+          drawModalBtn(nextGfx, nx, ny, 0x2ecc71, false);
+          const nextTxt = this.add.text(nx, ny, 'NEXT LEVEL', {
+            fontFamily: 'Orbitron, sans-serif', fontSize: '11px', color: '#ffffff', fontStyle: 'bold'
+          }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+
+          nextTxt.on('pointerover', () => drawModalBtn(nextGfx, nx, ny, 0x2ecc71, true));
+          nextTxt.on('pointerout',  () => drawModalBtn(nextGfx, nx, ny, 0x2ecc71, false));
+          nextTxt.on('pointerdown', () => this.scene.restart({ level: this.level + 1 }));
+        }
+
+        // Dispatch game over event for leaderboard (if fully resolved)
         const score = Math.max(10, (this.level + 1) * 1000 - this.moves * 10);
         window.dispatchEvent(new CustomEvent('phaser-game-over', {
           detail: { gameKey: 'unblock-me', score }
         }));
       }
-    };
+
+      playTone(freq: number, type: string = 'sine', duration: number = 0.1, vol: number = 0.08) {
+        try {
+          if (!this.audioCtx) this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+          const osc = this.audioCtx.createOscillator();
+          const gain = this.audioCtx.createGain();
+          osc.type = type as any;
+          osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+          gain.gain.setValueAtTime(vol, this.audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.audioCtx.destination);
+          osc.start();
+          osc.stop(this.audioCtx.currentTime + duration);
+        } catch (e) {}
+      }
+    }
+
+    return { scenes: [UnblockMeMenu, UnblockMeScene] };
   }
 }
