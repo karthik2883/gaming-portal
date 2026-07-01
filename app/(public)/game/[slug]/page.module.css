@@ -903,5 +903,193 @@
   }
 }
 
+/* ================================================
+   ORIENTATION WARNING OVERLAY
+   ================================================ */
+.orientationOverlay {
+  display: none;
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .orientationOverlay {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(4, 4, 8, 0.98);
+    z-index: 999999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    text-align: center;
+    padding: 32px;
+    box-sizing: border-box;
+  }
+
+  .orientationContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 320px;
+  }
+
+  .phoneIconWrapper {
+    margin-bottom: 24px;
+    animation: rotatePhone 2.2s ease-in-out infinite;
+    color: var(--accent-cyan, #00f3ff);
+    filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.5));
+  }
+
+  .phoneIcon {
+    display: block;
+  }
+
+  .orientationContent h2 {
+    font-family: var(--font-orbitron), sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+  }
+
+  .orientationContent p {
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #a3a3c2;
+    margin: 0;
+  }
+}
+
+@keyframes rotatePhone {
+  0% { transform: rotate(0deg); }
+  45% { transform: rotate(-90deg); }
+  55% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ================================================
+   MOBILE TAP TO PLAY OVERLAY
+   ================================================ */
+.mobilePlayOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 3, 7, 0.93);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+  cursor: pointer;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.mobilePlayContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mobilePlayIcon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(0, 243, 255, 0.08);
+  border: 2.5px solid var(--accent-cyan, #00f3ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-cyan, #00f3ff);
+  box-shadow: 0 0 18px rgba(0, 243, 255, 0.35);
+  animation: pulsePlay 1.8s ease-in-out infinite;
+}
+
+.mobilePlayIcon svg {
+  margin-left: 4px; /* visually center play icon */
+}
+
+@keyframes pulsePlay {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 18px rgba(0, 243, 255, 0.35);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 32px rgba(0, 243, 255, 0.65);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 18px rgba(0, 243, 255, 0.35);
+  }
+}
+
+.mobilePlayContent h2 {
+  font-family: var(--font-orbitron), sans-serif;
+  font-size: 1.4rem;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+  color: #ffffff;
+}
+
+.mobilePlayContent p {
+  font-family: var(--font-orbitron), sans-serif;
+  font-size: 0.8rem;
+  color: #a3a3c2;
+  margin: 0;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.pageContainer {
+  display: contents;
+}
+
+/* ================================================
+   MOBILE LANDSCAPE EXPANSION (AUTO-STRETCH)
+   ================================================ */
+@media (max-width: 900px) and (orientation: landscape) {
+  .pageContainer :global(.game-page-navbar-wrapper) {
+    display: none !important;
+  }
+
+  .breadcrumb {
+    display: none !important;
+  }
+
+  .gameHeader {
+    display: none !important;
+  }
+
+  .main {
+    padding-top: 0 !important;
+  }
+
+  .gameSection {
+    gap: 0 !important;
+  }
+
+  /* Make the game take up the full screen height on mobile rotation */
+  .gameWrapper {
+    height: 100vh !important;
+    height: 100svh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+}
+
+
 
 

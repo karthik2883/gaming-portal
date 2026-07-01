@@ -37,32 +37,79 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
   const [PhaserGameEngine, setPhaserGameEngine] = useState<((props: any) => JSX.Element) | null>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     // Load Phaser engine after mount — no Suspense/SSR boundary needed
     import('@/components/phaser/PhaserGameEngineV2').then(mod => {
       setPhaserGameEngine(() => mod.default);
     });
+
+    const checkMobile = () => {
+      setIsMobileDevice(
+        window.innerWidth < 768 ||
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0
+      );
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const toggleFullscreen = () => {
     if (!gameAreaRef.current) return;
-    if (!document.fullscreenElement) {
-      gameAreaRef.current.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
+    
+    // Resume audio context to guarantee audio is unlocked on first interaction
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        const tempCtx = new AudioContextClass();
+        tempCtx.resume();
+      }
+    } catch (e) {}
+
+    const doc = document as any;
+    const element = gameAreaRef.current as any;
+
+    if (!fullscreen) {
+      const req = element.requestFullscreen || 
+                  element.webkitRequestFullscreen || 
+                  element.mozRequestFullScreen || 
+                  element.msRequestFullscreen;
+      if (req) {
+        req.call(element).catch((err: any) => {
+          console.warn("Fullscreen request failed, using CSS fallback:", err);
+        });
+      }
       setFullscreen(true);
     } else {
-      document.exitFullscreen();
+      const exit = doc.exitFullscreen || 
+                   doc.webkitExitFullscreen || 
+                   doc.mozCancelFullScreen || 
+                   doc.msExitFullscreen;
+      if (exit && (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement)) {
+        exit.call(doc);
+      }
       setFullscreen(false);
     }
   };
 
+  const handleMobilePlay = () => {
+    setHasStarted(true);
+    toggleFullscreen();
+  };
+
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setFullscreen(!!document.fullscreenElement);
+      setFullscreen(!!(document as any).fullscreenElement || !!(document as any).webkitFullscreenElement || !!(document as any).mozFullScreenElement || !!(document as any).msFullscreenElement);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
@@ -347,8 +394,10 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
   };
 
   return (
-    <>
-      <Navbar />
+    <div className={styles.pageContainer}>
+      <div className="game-page-navbar-wrapper">
+        <Navbar />
+      </div>
       <main
         className={styles.main}
         style={{
@@ -397,6 +446,22 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
               >
                 {/* Game Area */}
                 <div className={`${styles.gameArea} ${fullscreen ? styles.gameAreaFullscreen : ''} ${game.slug === 'bubble-shooter' ? styles.bubbleShooterArea : ''}`}>
+                  {isMobileDevice && !hasStarted && (
+                    <div 
+                      className={styles.mobilePlayOverlay}
+                      onClick={handleMobilePlay}
+                    >
+                      <div className={styles.mobilePlayContent}>
+                        <div className={styles.mobilePlayIcon}>
+                          <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                        <h2>{game.title}</h2>
+                        <p>TAP TO PLAY FULLSCREEN</p>
+                      </div>
+                    </div>
+                  )}
                   {game.gameType === 'phaser' ? (
                     PhaserGameEngine ? (
                       <PhaserGameEngine
@@ -674,7 +739,22 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
           </div>
         </div>
       )}
+      {/* Orientation Warning Overlay for Landscape Games on Mobile Portrait */}
+      {isMobileDevice && game.width > game.height && (
+        <div className={styles.orientationOverlay}>
+          <div className={styles.orientationContent}>
+            <div className={styles.phoneIconWrapper}>
+              <svg className={styles.phoneIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="64" height="64">
+                <rect x="5" y="2" width="14" height="20" rx="2" />
+                <path d="M12 18h.01" />
+              </svg>
+            </div>
+            <h2>Rotate Your Device</h2>
+            <p>This game is best played in landscape mode. Please turn your device sideways.</p>
+          </div>
+        </div>
+      )}
       <Footer />
-    </>
+    </div>
   );
 }
