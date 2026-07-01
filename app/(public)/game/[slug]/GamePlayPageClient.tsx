@@ -292,15 +292,69 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
     );
   }
 
+  const getThemeStyle = () => {
+    switch (bgTheme) {
+      case 'synth':
+        return {
+          backgroundColor: '#12021c',
+          '--theme-accent': '#ff00aa',
+          '--theme-border': 'rgba(255, 0, 170, 0.25)',
+          '--theme-glow': '0 0 25px rgba(255, 0, 170, 0.15)',
+          '--theme-card-bg': 'rgba(32, 5, 48, 0.45)',
+          '--text-primary': '#ffffff',
+          '--text-secondary': '#e2d5ec',
+          '--text-muted': '#a690bd',
+          '--border-subtle': 'rgba(255, 0, 170, 0.15)',
+        };
+      case 'cyan':
+        return {
+          backgroundColor: '#01121c',
+          '--theme-accent': '#00f5ff',
+          '--theme-border': 'rgba(0, 245, 255, 0.25)',
+          '--theme-glow': '0 0 25px rgba(0, 245, 255, 0.15)',
+          '--theme-card-bg': 'rgba(3, 26, 41, 0.45)',
+          '--text-primary': '#ffffff',
+          '--text-secondary': '#cbe4f0',
+          '--text-muted': '#8baec1',
+          '--border-subtle': 'rgba(0, 245, 255, 0.15)',
+        };
+      case 'matrix':
+        return {
+          backgroundColor: '#010f03',
+          '--theme-accent': '#39ff14',
+          '--theme-border': 'rgba(57, 255, 20, 0.25)',
+          '--theme-glow': '0 0 25px rgba(57, 255, 20, 0.15)',
+          '--theme-card-bg': 'rgba(3, 26, 6, 0.45)',
+          '--text-primary': '#ffffff',
+          '--text-secondary': '#cbf5cd',
+          '--text-muted': '#8bc490',
+          '--border-subtle': 'rgba(57, 255, 20, 0.15)',
+        };
+      case 'midnight':
+      default:
+        return {
+          backgroundColor: '#050409',
+          '--theme-accent': '#00d4ff',
+          '--theme-border': 'rgba(0, 212, 255, 0.15)',
+          '--theme-glow': '0 0 20px rgba(0, 212, 255, 0.08)',
+          '--theme-card-bg': 'rgba(13, 13, 25, 0.45)',
+          '--text-primary': '#ffffff',
+          '--text-secondary': '#b0b3c6',
+          '--text-muted': '#787b99',
+          '--border-subtle': 'rgba(0, 212, 255, 0.1)',
+        };
+    }
+  };
+
   return (
     <>
       <Navbar />
       <main
         className={styles.main}
         style={{
-          backgroundColor: bgTheme === 'midnight' ? '#050409' : (bgTheme === 'synth' ? '#18042c' : (bgTheme === 'cyan' ? '#021a24' : '#021404')),
-          transition: 'background-color 0.4s ease',
-        }}
+          ...getThemeStyle(),
+          transition: 'all 0.4s ease',
+        } as any}
       >
         <div className="container">
           {/* Breadcrumb */}
@@ -339,8 +393,6 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
                 className={`${styles.gameWrapper} ${fullscreen ? styles.gameWrapperFullscreen : ''}`}
                 style={{
                   '--aspect-ratio': `${game.width} / ${game.height}`,
-                  '--theme-border': bgTheme === 'midnight' ? 'var(--border-glow)' : (bgTheme === 'synth' ? 'rgba(255, 0, 170, 0.6)' : (bgTheme === 'cyan' ? 'rgba(0, 255, 255, 0.6)' : 'rgba(57, 255, 20, 0.6)')),
-                  '--theme-glow': bgTheme === 'midnight' ? 'var(--shadow-glow-cyan)' : (bgTheme === 'synth' ? '0 0 20px rgba(255, 0, 170, 0.3)' : (bgTheme === 'cyan' ? '0 0 20px rgba(0, 255, 255, 0.3)' : '0 0 20px rgba(57, 255, 20, 0.3)')),
                 } as any}
               >
                 {/* Game Area */}
