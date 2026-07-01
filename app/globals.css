@@ -631,3 +631,34 @@ textarea.form-control {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* =============================================
+   PHASER GAME CANVAS
+   Phaser.Scale.FIT sets canvas CSS width/height
+   to fill the parent while maintaining aspect ratio.
+   DO NOT override width/height here — that breaks FIT.
+   CSS flexbox on .phaser-host handles centering.
+   ============================================= */
+.phaser-host {
+  /* Fill parent in both axes so Phaser has a stable reference */
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  /* Flexbox centers the canvas (Phaser Scale.FIT sizes it, we center it) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #08080f;
+  overflow: hidden;
+  border-radius: 12px;
+  position: relative;
+}
+
+.phaser-host canvas {
+  /* Block so margin/flexbox work correctly */
+  display: block !important;
+  /* Reset any margin Phaser's autoCenter may have set previously */
+  margin: 0 !important;
+  /* DO NOT set width/height/max-width/max-height here —
+     Phaser.Scale.FIT manages these via inline styles */
+}

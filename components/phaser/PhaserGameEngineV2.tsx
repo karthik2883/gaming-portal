@@ -31,6 +31,7 @@ const GAME_LOADERS: Record<string, () => Promise<any>> = {
   'algorithm-arena':   () => import(/* webpackChunkName: "algorithm-arena-game" */ './games/AlgorithmArenaGame'),
   'nebula-navigator':  () => import(/* webpackChunkName: "nebula-navigator-game" */ './games/NebulaNavigatorGame'),
   'type-racer':        () => import(/* webpackChunkName: "type-racer-game" */ './games/TypeRacerGame'),
+  jigsaw:              () => import(/* webpackChunkName: "jigsaw-game" */ './games/JigsawGame'),
   // Add your own: 'mygame': () => import('./games/MyGame'),
 };
 
@@ -152,8 +153,12 @@ export default function PhaserGameEngine({ gameKey, width = 800, height = 600 }:
             ? { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } }
             : undefined,
           scale: {
+            // FIT — scales canvas CSS size to fill the parent while maintaining
+            // aspect ratio. The parent (phaser-host/gameWrapper) has an explicit
+            // stable height so FIT won't cause a grow loop.
+            // No autoCenter — CSS flexbox in .phaser-host handles centering,
+            // preventing the JS margin vs CSS flexbox conflict that shifts games right.
             mode: Phaser.Scale.FIT,
-            autoCenter: Phaser.Scale.CENTER_BOTH,
           },
         });
       } catch (err) {
@@ -177,15 +182,8 @@ export default function PhaserGameEngine({ gameKey, width = 800, height = 600 }:
       ref={containerRef}
       className="phaser-host"
       onClick={handleContainerClick}
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        background: '#08080f',
-        position: 'relative',
-      }}
+      // Dimensions are controlled by globals.css (.phaser-host canvas rules).
+      // Do NOT set width/height here — let CSS max-width/height:auto do the scaling.
     >
       <input
         ref={inputRef}

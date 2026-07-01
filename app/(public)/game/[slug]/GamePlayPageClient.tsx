@@ -1,16 +1,10 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import dynamic from 'next/dynamic';
 import Navbar from '@/components/portal/Navbar';
 import GameCard from '@/components/portal/GameCard';
 import Footer from '@/components/portal/Footer';
 import toast from 'react-hot-toast';
 import styles from './page.module.css';
-
-const PhaserGameEngine = dynamic(
-  () => import('@/components/phaser/PhaserGameEngineV2'),
-  { ssr: false, loading: () => <div className={styles.loadingGame}>Loading game engine...</div> }
-);
 
 interface Game {
   _id: string;
@@ -37,7 +31,19 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
   const [loading, setLoading] = useState(!initialGame);
   const [fullscreen, setFullscreen] = useState(false);
   const [played, setPlayed] = useState(false);
+  const [bgTheme, setBgTheme] = useState<'midnight' | 'synth' | 'cyan' | 'matrix'>('midnight');
+  const [mounted, setMounted] = useState(false);
+  // Lazy-loaded Phaser engine — avoids next/dynamic Suspense boundary hydration errors
+  const [PhaserGameEngine, setPhaserGameEngine] = useState<((props: any) => JSX.Element) | null>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    // Load Phaser engine after mount — no Suspense/SSR boundary needed
+    import('@/components/phaser/PhaserGameEngineV2').then(mod => {
+      setPhaserGameEngine(() => mod.default);
+    });
+  }, []);
 
   const toggleFullscreen = () => {
     if (!gameAreaRef.current) return;
@@ -257,7 +263,7 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
     setSubmitting(false);
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <>
         <Navbar />
@@ -289,10 +295,16 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
   return (
     <>
       <Navbar />
-      <main className={styles.main}>
+      <main
+        className={styles.main}
+        style={{
+          backgroundColor: bgTheme === 'midnight' ? '#050409' : (bgTheme === 'synth' ? '#18042c' : (bgTheme === 'cyan' ? '#021a24' : '#021404')),
+          transition: 'background-color 0.4s ease',
+        }}
+      >
         <div className="container">
           {/* Breadcrumb */}
-          <nav className={styles.breadcrumb}>
+          <div className={styles.breadcrumb} role="navigation" aria-label="Breadcrumb">
             <a href="/">Home</a>
             <span>›</span>
             {game.categories?.[0] && (
@@ -302,7 +314,7 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
               </>
             )}
             <span>{game.title}</span>
-          </nav>
+          </div>
 
           <div className={`${styles.layout} ${fullscreen ? styles.fullscreenLayout : ''}`}>
             {/* Game Embed */}
@@ -319,51 +331,120 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
                     <span className={styles.playCount}>🎮 {game.playCount.toLocaleString()} plays</span>
                   </div>
                 </div>
-                <button
-                  className={styles.fullscreenBtn}
-                  onClick={toggleFullscreen}
-                  title="Toggle fullscreen"
-                >
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-orbitron), sans-serif', fontWeight: 'bold', letterSpacing: '1px' }}>
-                    {fullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN'}
-                  </span>
-                  <span>{fullscreen ? '⊡' : '⊞'}</span>
-                </button>
               </div>
 
-              {/* Game Area */}
+              {/* Game Wrapper (with bottom control bar) */}
               <div
                 ref={gameAreaRef}
-                className={`${styles.gameArea} ${game.slug === 'bubble-shooter' ? styles.bubbleShooterArea : ''}`}
+                className={`${styles.gameWrapper} ${fullscreen ? styles.gameWrapperFullscreen : ''}`}
+                style={{
+                  '--aspect-ratio': `${game.width} / ${game.height}`,
+                  '--theme-border': bgTheme === 'midnight' ? 'var(--border-glow)' : (bgTheme === 'synth' ? 'rgba(255, 0, 170, 0.6)' : (bgTheme === 'cyan' ? 'rgba(0, 255, 255, 0.6)' : 'rgba(57, 255, 20, 0.6)')),
+                  '--theme-glow': bgTheme === 'midnight' ? 'var(--shadow-glow-cyan)' : (bgTheme === 'synth' ? '0 0 20px rgba(255, 0, 170, 0.3)' : (bgTheme === 'cyan' ? '0 0 20px rgba(0, 255, 255, 0.3)' : '0 0 20px rgba(57, 255, 20, 0.3)')),
+                } as any}
               >
-                {game.gameType === 'phaser' ? (
-                  <PhaserGameEngine
-                    gameKey={game.phaserGameKey || 'snake'}
-                    width={game.width}
-                    height={game.height}
-                  />
-                ) : game.iframeUrl ? (
-                  <iframe
-                    src={game.iframeUrl}
-                    width="100%"
-                    height="100%"
-                    style={{
-                      border: 'none',
-                      borderRadius: '12px',
-                      minHeight: '500px',
-                      display: 'block',
-                    }}
-                    allow="fullscreen; autoplay"
-                    allowFullScreen
-                    title={game.title}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className={styles.noEmbed}>
-                    <span>🎮</span>
-                    <p>Game unavailable</p>
+                {/* Game Area */}
+                <div className={`${styles.gameArea} ${fullscreen ? styles.gameAreaFullscreen : ''} ${game.slug === 'bubble-shooter' ? styles.bubbleShooterArea : ''}`}>
+                  {game.gameType === 'phaser' ? (
+                    PhaserGameEngine ? (
+                      <PhaserGameEngine
+                        gameKey={game.phaserGameKey || 'snake'}
+                        width={game.width}
+                        height={game.height}
+                      />
+                    ) : (
+                      <div className={styles.loadingGame}>Loading game engine...</div>
+                    )
+                  ) : game.iframeUrl ? (
+                    <iframe
+                      src={game.iframeUrl}
+                      width="100%"
+                      height="100%"
+                      style={{
+                        border: 'none',
+                        borderRadius: '12px 12px 0 0',
+                        minHeight: '400px',
+                        display: 'block',
+                      }}
+                      allow="fullscreen; autoplay"
+                      allowFullScreen
+                      title={game.title}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className={styles.noEmbed}>
+                      <span>🎮</span>
+                      <p>Game unavailable</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Control Bar like YouTube */}
+                <div className={styles.controlBar}>
+                  <div className={styles.controlLeft}>
+                    <span className={styles.controlLiveDot}>🟢</span>
+                    <span className={styles.controlStatusText}>Leaderboard Enabled</span>
                   </div>
-                )}
+
+                  <div className={styles.controlRight}>
+                    {/* Background Toggle Option */}
+                    <div className={styles.bgToggleWrapper}>
+                      <span className={styles.controlLabel}>AMBIENT BG:</span>
+                      <div className={styles.themeButtons}>
+                        <button
+                          type="button"
+                          className={`${styles.themeBtn} ${bgTheme === 'midnight' ? styles.themeBtnActive : ''}`}
+                          onClick={() => setBgTheme('midnight')}
+                          title="Midnight Black"
+                        >
+                          Midnight
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.themeBtn} ${bgTheme === 'synth' ? styles.themeBtnActive : ''}`}
+                          onClick={() => setBgTheme('synth')}
+                          title="Neon Synthwave"
+                        >
+                          Synth
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.themeBtn} ${bgTheme === 'cyan' ? styles.themeBtnActive : ''}`}
+                          onClick={() => setBgTheme('cyan')}
+                          title="Cyber Cyan"
+                        >
+                          Cyan
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.themeBtn} ${bgTheme === 'matrix' ? styles.themeBtnActive : ''}`}
+                          onClick={() => setBgTheme('matrix')}
+                          title="Green Matrix"
+                        >
+                          Matrix
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.divider} />
+
+                    {/* YouTube-like Fullscreen Button */}
+                    <button
+                      type="button"
+                      className={styles.ytFullscreenBtn}
+                      onClick={toggleFullscreen}
+                      title={fullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                    >
+                      <svg viewBox="0 0 36 36" width="22" height="22" fill="currentColor">
+                        {fullscreen ? (
+                          <path d="M14 14H10v2h6v-6h-2v4zm0 8h-4v-2h6v6h-2v-4zm8-8h4v-2h-6v6h2v-4zm0 8h4v2h-6v-6h2v4z" />
+                        ) : (
+                          <path d="M10 21h4v2h-6v-6h2v4zm0-6H8v-6h6v2h-4v4zm16 6v2h-6v-6h2v4h4zm-4-10H28v6h-2v-4h-4v-2z" />
+                        )}
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Instructions */}

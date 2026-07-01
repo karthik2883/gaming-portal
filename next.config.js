@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV === 'development';
+
 const nextConfig = {
   // Faster JS minification with SWC
   swcMinify: true,
@@ -16,18 +18,30 @@ const nextConfig = {
   // Compress responses with gzip / brotli
   compress: true,
 
-  // Power cache revalidation
+  // Keep more pages in memory so HMR re-compiles less
   onDemandEntries: {
-    maxInactiveAge: 60 * 60 * 1000, // Keep pages in memory for 1 hour
+    maxInactiveAge: 60 * 60 * 1000,
     pagesBufferLength: 10,
   },
 
   experimental: {
-    optimizeCss: true, // Inline critical CSS — eliminates render-blocking CSS
+    // optimizeCss uses critters which is very slow — only enable in production
+    optimizeCss: !isDev,
     scrollRestoration: true,
     serverComponentsExternalPackages: ['mongoose', 'mongodb'],
     optimisticClientCache: true,
-    // Turbopack for faster local dev builds
+  },
+
+  // TypeScript: skip full type checking during dev for faster HMR
+  typescript: {
+    // Type errors will still be shown in the editor via tsserver;
+    // this just avoids re-running tsc on every file change in `next dev`
+    ignoreBuildErrors: isDev,
+  },
+
+  // ESLint: skip during dev builds (run separately with `npm run lint`)
+  eslint: {
+    ignoreDuringBuilds: isDev,
   },
 
   // Aggressive HTTP caching headers for static assets
@@ -41,7 +55,6 @@ const nextConfig = {
         ],
       },
       {
-        // Cache icons and logos at the root level aggressively
         source: '/:file(fliptrip_favicon.png|fliptrip_logo.png|favicon.ico|favicon.png|manifest.json)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
@@ -80,13 +93,12 @@ const nextConfig = {
     ];
   },
 
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       'phaser3spectorjs': require.resolve('./lib/stubs/phaser3spectorjs.js'),
     };
 
-    // Split vendor chunks for better caching
     if (!isServer) {
       config.optimization = {
         ...config.optimization,
@@ -109,6 +121,11 @@ const nextConfig = {
           },
         },
       };
+
+      // In dev, disable source maps for vendor bundles — big speed win
+      if (dev) {
+        config.devtool = 'eval-cheap-module-source-map';
+      }
     }
 
     return config;
