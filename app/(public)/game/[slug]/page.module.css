@@ -694,4 +694,97 @@
   margin-top: 8px;
 }
 
+/* Mobile responsive fixes for control bar on portrait/narrow viewports */
+@media (max-width: 600px) {
+  .controlLeft {
+    display: none !important; /* Hide "Leaderboard Enabled" to save critical width */
+  }
+
+  .controlLabel {
+    display: none !important; /* Hide "AMBIENT BG:" text label */
+  }
+
+  .controlBar {
+    justify-content: center !important;
+    padding: 0 10px !important;
+    gap: 12px !important;
+  }
+
+  .controlRight {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px !important;
+  }
+
+  .bgToggleWrapper {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .themeButtons {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px;
+    gap: 4px;
+  }
+
+  /* Convert text buttons to round color dots */
+  .themeBtn {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    font-size: 0 !important; /* Hides text (Midnight, Synth, etc.) */
+    border: 2px solid transparent !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    position: relative;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s;
+  }
+
+  /* Specific color dots matching the themes */
+  .themeBtn[title*="Midnight"] {
+    background-color: #0d0d15 !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+  }
+  .themeBtn[title*="Midnight"].themeBtnActive {
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 8px var(--accent-cyan);
+    transform: scale(1.2);
+  }
+
+  .themeBtn[title*="Synth"] {
+    background-color: #ff00aa !important;
+    border-color: rgba(255, 0, 170, 0.3) !important;
+  }
+  .themeBtn[title*="Synth"].themeBtnActive {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 8px #ff00aa;
+    transform: scale(1.2);
+  }
+
+  .themeBtn[title*="Cyan"] {
+    background-color: #00f5ff !important;
+    border-color: rgba(0, 255, 255, 0.3) !important;
+  }
+  .themeBtn[title*="Cyan"].themeBtnActive {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 8px #00f5ff;
+    transform: scale(1.2);
+  }
+
+  .themeBtn[title*="Matrix"] {
+    background-color: #39ff14 !important;
+    border-color: rgba(57, 255, 20, 0.3) !important;
+  }
+  .themeBtn[title*="Matrix"].themeBtnActive {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 8px #39ff14;
+    transform: scale(1.2);
+  }
+}
+
+
 
