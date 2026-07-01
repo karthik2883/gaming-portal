@@ -77,27 +77,29 @@ export default class BubbleShooterGameFactory {
         g.fillStyle(0xbd00ff, 0.02);
         g.fillCircle(400, 420, 240);
 
+        const W = this.scale.width, H = this.scale.height;
+
         // Title
-        const title = this.add.text(400, 85, 'BUBBLE  NEON', {
+        const title = this.add.text(W/2, 85, 'BUBBLE  NEON', {
           fontFamily: 'Orbitron, monospace',
-          fontSize: '36px',
+          fontSize: '32px',
           color: '#00f3ff',
           fontStyle: 'bold',
         }).setOrigin(0.5);
         title.setStroke('#00f3ff', 3);
         title.setShadow(0, 0, '#00f3ff', 16, true, true);
 
-        const subtitle = this.add.text(400, 140, 'SELECT LEVEL TO INITIATE GAMEPLAY', {
+        const subtitle = this.add.text(W/2, 130, 'SELECT LEVEL TO START', {
           fontFamily: 'Orbitron, monospace',
           fontSize: '10px',
           color: '#a3a3c2',
-          letterSpacing: '2.5px',
         }).setOrigin(0.5);
 
-        // Grid of 8 level buttons centered beautifully on 800x600 screen
-        const colW = 120;
-        const spacing = 30;
-        const margin = 115;
+        // Responsive 4-column grid centered on canvas
+        const cols = 4;
+        const colW = Math.min(120, Math.floor((W - 40) / cols - 20));
+        const spacing = Math.max(10, Math.floor((W - 40 - cols * colW) / (cols - 1)));
+        const margin = Math.round((W - (cols * colW + (cols - 1) * spacing)) / 2) + colW / 2;
 
         const levelNames = [
           'EASY', 'MEDIUM', 'HARD', 'EXPERT',
@@ -112,8 +114,8 @@ export default class BubbleShooterGameFactory {
         for (let i = 0; i < 8; i++) {
           const row = Math.floor(i / 4);
           const col = i % 4;
-          const bx = margin + colW / 2 + col * (colW + spacing);
-          const by = 240 + row * 120;
+          const bx = margin + col * (colW + spacing);
+          const by = 220 + row * 110;
 
           const color = levelColors[i];
           const colorHexStr = '#' + color.toString(16).padStart(6, '0');
@@ -175,9 +177,9 @@ export default class BubbleShooterGameFactory {
         }
 
         // Instructions Footer
-        this.add.text(400, 520, '🎯 Match 3 or more bubbles to pop them.\nClear the board to progress to the next level.', {
+        this.add.text(W/2, H - 50, '🎯 Match 3 or more bubbles to pop them.\nClear the board to progress to the next level.', {
           fontFamily: 'monospace',
-          fontSize: '11px',
+          fontSize: '10px',
           color: '#63638b',
           align: 'center',
           lineSpacing: 5
@@ -284,16 +286,17 @@ export default class BubbleShooterGameFactory {
 
       // ── create ────────────────────────────────────────────────────────────
       create() {
-        // background
+        // background — use canvas dimensions
+        const W = this.scale.width, H = this.scale.height;
         const bg = this.add.graphics();
         bg.fillGradientStyle(0x02020a, 0x02020a, 0x050512, 0x050512, 1);
-        bg.fillRect(0, 0, 800, 600);
+        bg.fillRect(0, 0, W, H);
 
-        // Ambient glowing background behind the board
+        // Ambient glow
         const ambientGlow = this.add.graphics();
-        ambientGlow.fillStyle(0x00f3ff, 0.03); // super soft cyan glow
+        ambientGlow.fillStyle(0x00f3ff, 0.03);
         ambientGlow.fillCircle(BS_LX, BS_OY + 100, 180);
-        ambientGlow.fillStyle(0xbd00ff, 0.02); // super soft magenta/purple glow
+        ambientGlow.fillStyle(0xbd00ff, 0.02);
         ambientGlow.fillCircle(BS_LX, BS_DANG, 200);
 
         // build bubble textures
@@ -529,41 +532,47 @@ export default class BubbleShooterGameFactory {
         }
       }
 
-      // ── HUD ───────────────────────────────────────────────────────────────
+      // ── HUD — overlaid inside board area (top section above the bubbles) ─────
       buildHUD() {
-        const rx = BS_OX + BS_PW + 28;  // centered beautifully on the right of the board
-        const labelStyle  = { fontFamily: 'monospace', fontSize: '10px', color: '#63638b', fontStyle: 'bold' };
-        const valueStyle  = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#00f3ff', fontStyle: 'bold' };
-        const valueStyle2 = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#ffea00', fontStyle: 'bold' };
-        const valueStyle3 = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#39ff14', fontStyle: 'bold' };
-        const valueStyle4 = { fontFamily: 'Orbitron, monospace', fontSize: '16px', color: '#ff0055', fontStyle: 'bold' };
+        // Right panel position: inside the board, top-right area
+        // We show compact score info as small text overlay at top of canvas
+        const labelStyle  = { fontFamily: 'monospace', fontSize: '8px', color: '#63638b', fontStyle: 'bold' };
+        const valueStyle  = { fontFamily: 'Orbitron, monospace', fontSize: '13px', color: '#00f3ff', fontStyle: 'bold' };
+        const valueStyle2 = { fontFamily: 'Orbitron, monospace', fontSize: '13px', color: '#ffea00', fontStyle: 'bold' };
+        const valueStyle3 = { fontFamily: 'Orbitron, monospace', fontSize: '13px', color: '#39ff14', fontStyle: 'bold' };
+        const valueStyle4 = { fontFamily: 'Orbitron, monospace', fontSize: '13px', color: '#ff0055', fontStyle: 'bold' };
 
-        this.add.text(rx, 60, 'SCORE', labelStyle);
-        this.scoreTxt = this.add.text(rx, 74, '0', valueStyle);
-        this.scoreTxt.setStroke('#00f3ff', 2);
-        this.scoreTxt.setShadow(0, 0, '#00f3ff', 8, true, true);
+        // Place HUD labels compactly right of the board or overlay at top-right inside canvas
+        // Use fixed positions relative to board right edge but within canvas
+        const rx = BS_OX + BS_PW - 2; // right edge of board (x=600)
+        const topY = BS_OY + 4;       // just below ceiling line
 
-        this.add.text(rx, 108, 'BEST', labelStyle);
-        this.hiTxt = this.add.text(rx, 122, '0', valueStyle2);
-        this.hiTxt.setStroke('#ffea00', 2);
-        this.hiTxt.setShadow(0, 0, '#ffea00', 8, true, true);
+        // Small HUD overlay background (top-right of board)
+        const hudBg = this.add.graphics().setDepth(3);
+        hudBg.fillStyle(0x01010a, 0.82);
+        hudBg.fillRoundedRect(rx - 90, topY, 92, 200, 6);
+        hudBg.lineStyle(1, 0x00f3ff, 0.25);
+        hudBg.strokeRoundedRect(rx - 90, topY, 92, 200, 6);
 
-        this.add.text(rx, 156, 'LEVEL', labelStyle);
-        this.lvlTxt = this.add.text(rx, 170, '1', valueStyle3);
-        this.lvlTxt.setStroke('#39ff14', 2);
-        this.lvlTxt.setShadow(0, 0, '#39ff14', 8, true, true);
+        const lx = rx - 45; // center of HUD overlay
 
-        this.add.text(rx, 206, 'TO ROW', labelStyle);
-        this.shotsTxt = this.add.text(rx, 220, '6', valueStyle4);
-        this.shotsTxt.setStroke('#ff0055', 2);
-        this.shotsTxt.setShadow(0, 0, '#ff0055', 8, true, true);
+        this.add.text(lx, topY + 6, 'SCORE', labelStyle).setOrigin(0.5).setDepth(4);
+        this.scoreTxt = this.add.text(lx, topY + 18, '0', valueStyle).setOrigin(0.5).setDepth(4);
+        this.scoreTxt.setShadow(0, 0, '#00f3ff', 6, true, true);
 
-        this.add.text(rx, 264, 'NEXT', labelStyle);
+        this.add.text(lx, topY + 42, 'BEST', labelStyle).setOrigin(0.5).setDepth(4);
+        this.hiTxt = this.add.text(lx, topY + 54, '0', valueStyle2).setOrigin(0.5).setDepth(4);
+        this.hiTxt.setShadow(0, 0, '#ffea00', 6, true, true);
 
-        // controls hint
-        const lx = BS_OX - 8;
-        this.add.text(lx, 60, 'AIM\nmouse', { fontFamily: 'monospace', fontSize: '9px', color: '#45456b', align: 'right', lineSpacing: 3 }).setOrigin(1, 0);
-        this.add.text(lx, 88, 'SHOOT\nclick', { fontFamily: 'monospace', fontSize: '9px', color: '#45456b', align: 'right', lineSpacing: 3 }).setOrigin(1, 0);
+        this.add.text(lx, topY + 78, 'LEVEL', labelStyle).setOrigin(0.5).setDepth(4);
+        this.lvlTxt = this.add.text(lx, topY + 90, '1', valueStyle3).setOrigin(0.5).setDepth(4);
+        this.lvlTxt.setShadow(0, 0, '#39ff14', 6, true, true);
+
+        this.add.text(lx, topY + 114, 'TO ROW', labelStyle).setOrigin(0.5).setDepth(4);
+        this.shotsTxt = this.add.text(lx, topY + 126, '6', valueStyle4).setOrigin(0.5).setDepth(4);
+        this.shotsTxt.setShadow(0, 0, '#ff0055', 6, true, true);
+
+        this.add.text(lx, topY + 152, 'NEXT', labelStyle).setOrigin(0.5).setDepth(4);
 
         this.refreshHUD();
       }
@@ -696,11 +705,13 @@ export default class BubbleShooterGameFactory {
           this.nxtSpr = null;
         }
 
-        // new preview bubble
+        // new preview bubble — shown inside HUD overlay at top-right of board
         const pal = BS_PAL.slice(0, Math.min(5, this.palSize));
         const col = pal[Math.floor(Math.random() * pal.length)];
-        const rx = BS_OX + BS_PW + 28;
-        this.nxtSpr = this.add.sprite(rx + 24, 292, 'b' + col.k).setOrigin(0.5).setScale(0.9).setDepth(2);
+        // Position inside the overlay HUD box (top-right of board)
+        const hx = BS_OX + BS_PW - 47; // center of HUD overlay
+        const hy = BS_OY + 182;         // below the NEXT label
+        this.nxtSpr = this.add.sprite(hx, hy, 'b' + col.k).setOrigin(0.5).setScale(0.8).setDepth(5);
         this.nxtKey = col.k;
         this.nxtHex = col.h;
       }

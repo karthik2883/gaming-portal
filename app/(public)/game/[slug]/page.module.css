@@ -85,10 +85,10 @@
 }
 
 .gameTitle {
-  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  font-size: clamp(1.2rem, 3.5vw, 2.4rem);
   font-family: var(--font-orbitron), sans-serif;
   font-weight: 900;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: #ffffff;
   text-shadow: 0 0 15px var(--theme-border);
   letter-spacing: 0.02em;
@@ -419,6 +419,89 @@
 
   .relatedGrid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+/* ================================================
+   MOBILE: Full-Viewport Game Experience
+   On small screens the game takes priority.
+   Sidebar, breadcrumb and ambient controls are hidden
+   to maximise the playable canvas area.
+   ================================================ */
+@media (max-width: 768px) {
+  /* Hide breadcrumb — takes up vertical space on mobile */
+  .breadcrumb {
+    display: none !important;
+  }
+
+  /* Collapse game header to one compact line */
+  .gameHeader {
+    padding: 8px 12px 4px;
+  }
+
+  .gameTitle {
+    font-size: 1rem !important;
+    margin-bottom: 2px !important;
+    letter-spacing: 0 !important;
+  }
+
+  .gameMeta {
+    gap: 4px;
+    font-size: 0.7rem;
+  }
+
+  .playCount {
+    font-size: 0.72rem;
+  }
+
+  /* Tight gap between header and game wrapper */
+  .gameSection {
+    gap: 6px;
+  }
+
+  /* Game wrapper: fill viewport below nav+header */
+  .gameWrapper {
+    height: calc(100svh - var(--nav-height) - 52px) !important;
+    min-height: 320px !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  /* Control bar: hide ambient BG toggles on mobile — show only fullscreen */
+  .bgToggleWrapper,
+  .controlLabel,
+  .controlStatusText,
+  .controlLiveDot {
+    display: none !important;
+  }
+
+  .controlBar {
+    justify-content: flex-end !important;
+    padding: 0 12px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .controlLeft {
+    display: none !important;
+  }
+
+  .controlRight {
+    width: auto;
+    gap: 4px !important;
+  }
+
+  /* Hide sidebar on mobile — shown below game */
+  .sidebar {
+    display: none !important;
+  }
+
+  /* Instructions / description sections below game */
+  .instructions,
+  .description {
+    margin: 0 12px;
+    border-radius: 8px;
   }
 }
 

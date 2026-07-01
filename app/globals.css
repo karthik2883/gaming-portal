@@ -616,6 +616,14 @@ textarea.form-control {
     padding: 0 16px;
   }
 
+  /* On the game play page, remove container horizontal padding so
+     the game wrapper stretches edge-to-edge on mobile devices */
+  .game-page-container.container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: 100% !important;
+  }
+
   .section {
     padding: 40px 0;
   }

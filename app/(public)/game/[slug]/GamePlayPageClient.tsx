@@ -356,7 +356,7 @@ export default function GamePlayPageClient({ game: initialGame, params }: { game
           transition: 'all 0.4s ease',
         } as any}
       >
-        <div className="container">
+        <div className="container game-page-container">
           {/* Breadcrumb */}
           <div className={styles.breadcrumb} role="navigation" aria-label="Breadcrumb">
             <a href="/">Home</a>

@@ -107,12 +107,15 @@ function saveProgress(levelIndex: number, stars: number) {
 }
 
 // ─── Candy Types ───────────────────────────────────────────────────────────
-const TILE_SIZE = 60;
+const TILE_SIZE = 56;       // each candy cell
 const GRID_ROWS = 8;
 const GRID_COLS = 8;
-const BOARD_X = 275;
-const BOARD_Y = 90;
-const SIDE_X = 140;
+// BOARD_X / BOARD_Y are now computed per-scene from this.scale.width/height
+// to keep the layout fully responsive and centered on any screen size.
+// HUD is a compact strip at the top; board is centered below it.
+const HUD_H    = 80;        // top HUD strip height
+function getBoardX(W: number) { return Math.round((W - GRID_COLS * TILE_SIZE) / 2); }
+function getBoardY()           { return HUD_H + 10; }
 
 const ALL_CANDY_TYPES = [
   { type: 0, colorStr: '#ff0055' },
@@ -157,11 +160,14 @@ class CandyLevelSelectFactory {
           fontFamily: 'Orbitron, monospace', fontSize: '13px', color: '#9090b0'
         }).setOrigin(0.5);
 
-        // Grid of 20 level buttons (5 columns × 4 rows)
-        const cols = 5, rows = 4;
-        const btnW = 130, btnH = 110, padX = 18, padY = 18;
-        const startX = (W - (cols * btnW + (cols - 1) * padX)) / 2 + btnW / 2;
-        const startY = 115;
+        // Responsive grid: 4 cols on wide, 4 on narrow
+        const cols = W >= 600 ? 4 : 4;
+        const gapX = Math.max(8, (W - 40 - cols * 110) / (cols - 1));
+        const btnW = Math.min(130, Math.floor((W - 40 - gapX * (cols - 1)) / cols));
+        const btnH = Math.round(btnW * 0.85);
+        const padX = gapX, padY = 12;
+        const startX = Math.round((W - (cols * btnW + (cols - 1) * padX)) / 2) + Math.round(btnW / 2);
+        const startY = 110;
 
         for (let i = 0; i < 20; i++) {
           const col = i % cols, row = Math.floor(i / cols);
@@ -177,54 +183,45 @@ class CandyLevelSelectFactory {
           const panel = this.add.graphics();
           panel.lineStyle(unlocked ? 2 : 1, borderColor, unlocked ? 0.9 : 0.4);
           panel.fillStyle(panelColor, unlocked ? 0.95 : 0.5);
-          panel.strokeRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 10);
-          panel.fillRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 10);
+          panel.strokeRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 8);
+          panel.fillRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 8);
 
           if (unlocked) {
-            // Subtle glow behind unlocked levels
-            const glow = this.add.graphics();
-            glow.lineStyle(8, lvl.accentColor, 0.08);
-            glow.strokeRoundedRect(x - btnW/2 - 4, y - btnH/2 - 4, btnW + 8, btnH + 8, 14);
-
+            const fs = Math.max(14, Math.round(btnW * 0.22));
             // Level number
-            this.add.text(x, y - 22, `${i + 1}`, {
-              fontFamily: 'Orbitron, monospace', fontSize: '28px',
+            this.add.text(x, y - btnH/2 + 16, `${i + 1}`, {
+              fontFamily: 'Orbitron, monospace', fontSize: `${fs}px`,
               color: lvl.accentStr, fontWeight: 'bold'
-            }).setOrigin(0.5).setShadow(0, 0, lvl.accentStr, 6, true, true);
+            }).setOrigin(0.5).setShadow(0, 0, lvl.accentStr, 4, true, true);
 
             // Level name
-            this.add.text(x, y + 8, lvl.name, {
-              fontFamily: 'monospace', fontSize: '9.5px', color: '#aaaacc',
-              wordWrap: { width: btnW - 16 }
+            this.add.text(x, y - btnH/2 + 36, lvl.name, {
+              fontFamily: 'monospace', fontSize: '9px', color: '#ccccee',
+              wordWrap: { width: btnW - 10 }
             }).setOrigin(0.5);
 
             // Stars
             const starStr = ['☆☆☆', '★☆☆', '★★☆', '★★★'][starCount];
             const starColor = starCount === 0 ? '#404060' : starCount === 3 ? '#ffd700' : '#ffaa00';
-            this.add.text(x, y + 33, starStr, {
-              fontFamily: 'monospace', fontSize: '14px', color: starColor
-            }).setOrigin(0.5);
-
-            // Moves hint
-            this.add.text(x, y + 50, `${lvl.moves} moves`, {
-              fontFamily: 'monospace', fontSize: '9px', color: '#606080'
+            this.add.text(x, y + btnH/2 - 14, starStr, {
+              fontFamily: 'monospace', fontSize: '11px', color: starColor
             }).setOrigin(0.5);
 
             // Clickable zone
-            const zone = this.add.zone(x, y, btnW, btnH).setInteractive();
+            const zone = this.add.zone(x, y, btnW, btnH).setInteractive({ useHandCursor: true });
             zone.on('pointerover', () => {
               panel.clear();
               panel.lineStyle(2.5, lvl.accentColor, 1);
               panel.fillStyle(0x14143a, 0.98);
-              panel.strokeRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 10);
-              panel.fillRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 10);
+              panel.strokeRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 8);
+              panel.fillRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 8);
             });
             zone.on('pointerout', () => {
               panel.clear();
               panel.lineStyle(2, borderColor, 0.9);
               panel.fillStyle(panelColor, 0.95);
-              panel.strokeRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 10);
-              panel.fillRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 10);
+              panel.strokeRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 8);
+              panel.fillRoundedRect(x - btnW/2, y - btnH/2, btnW, btnH, 8);
             });
             zone.on('pointerdown', () => {
               getAudioContext();
@@ -233,16 +230,16 @@ class CandyLevelSelectFactory {
             });
           } else {
             // Locked level
-            this.add.text(x, y - 12, '🔒', { fontSize: '26px' }).setOrigin(0.5).setAlpha(0.5);
-            this.add.text(x, y + 20, `${i + 1}`, {
-              fontFamily: 'Orbitron, monospace', fontSize: '13px', color: '#444466'
+            this.add.text(x, y - 8, '🔒', { fontSize: '20px' }).setOrigin(0.5).setAlpha(0.5);
+            this.add.text(x, y + 16, `${i + 1}`, {
+              fontFamily: 'Orbitron, monospace', fontSize: '11px', color: '#444466'
             }).setOrigin(0.5);
           }
         }
 
-        // Best score hint at bottom
-        this.add.text(W / 2, H - 18, '★★★ = 200% of target score  ·  Unlock all 20 levels!', {
-          fontFamily: 'monospace', fontSize: '10px', color: '#505070'
+        // Hint at bottom
+        this.add.text(W / 2, H - 14, '★★★ = 200% of target  ·  Unlock all 20 levels!', {
+          fontFamily: 'monospace', fontSize: '9px', color: '#505070'
         }).setOrigin(0.5);
       }
     };
@@ -440,43 +437,55 @@ class CandyMatchSceneFactory {
         const gfx = this.gridGraphics;
         gfx.clear();
         const cfg = this.levelConfig;
+        const W = this.scale.width;
+        const BX = getBoardX(W);
+        const BY = getBoardY();
+        const BW = GRID_COLS * TILE_SIZE;
+        const BH = GRID_ROWS * TILE_SIZE;
 
         // Background fill
         gfx.fillStyle(0x08081a, 0.9);
-        gfx.fillRoundedRect(BOARD_X-6, BOARD_Y-6, GRID_COLS*TILE_SIZE+12, GRID_ROWS*TILE_SIZE+12, 10);
+        gfx.fillRoundedRect(BX-6, BY-6, BW+12, BH+12, 10);
 
         // Glow border
         gfx.lineStyle(2.5, cfg.accentColor, 0.85);
-        gfx.strokeRoundedRect(BOARD_X-6, BOARD_Y-6, GRID_COLS*TILE_SIZE+12, GRID_ROWS*TILE_SIZE+12, 10);
+        gfx.strokeRoundedRect(BX-6, BY-6, BW+12, BH+12, 10);
 
         // Outer glow
         gfx.lineStyle(8, cfg.accentColor, 0.08);
-        gfx.strokeRoundedRect(BOARD_X-12, BOARD_Y-12, GRID_COLS*TILE_SIZE+24, GRID_ROWS*TILE_SIZE+24, 14);
+        gfx.strokeRoundedRect(BX-12, BY-12, BW+24, BH+24, 14);
 
         // Cell lines
         gfx.lineStyle(0.5, 0x1c1c40, 0.7);
         for (let r = 1; r < GRID_ROWS; r++) {
-          const y = BOARD_Y + r * TILE_SIZE;
-          gfx.lineBetween(BOARD_X, y, BOARD_X + GRID_COLS*TILE_SIZE, y);
+          const y = BY + r * TILE_SIZE;
+          gfx.lineBetween(BX, y, BX + BW, y);
         }
         for (let c = 1; c < GRID_COLS; c++) {
-          const x = BOARD_X + c * TILE_SIZE;
-          gfx.lineBetween(x, BOARD_Y, x, BOARD_Y + GRID_ROWS*TILE_SIZE);
+          const x = BX + c * TILE_SIZE;
+          gfx.lineBetween(x, BY, x, BY + BH);
         }
       }
 
       // ────────────────────────────────────────────────────
-      // HUD
+      // HUD — compact top bar spanning full canvas width
       // ────────────────────────────────────────────────────
       buildHUD() {
         const cfg = this.levelConfig;
-        const W = this.scale.width, H = this.scale.height;
-        const sideX = SIDE_X; // center of left sidebar
+        const W = this.scale.width;
+        const H = this.scale.height;
 
-        // Back button
-        const backBtn = this.add.text(20, 18, '‹ LEVELS', {
-          fontFamily: 'Orbitron, monospace', fontSize: '12px', color: '#9090b0'
-        }).setInteractive();
+        // ── Top HUD strip background ──
+        const hudBg = this.add.graphics();
+        hudBg.fillStyle(0x07071a, 0.97);
+        hudBg.fillRect(0, 0, W, HUD_H);
+        hudBg.lineStyle(1, cfg.accentColor, 0.3);
+        hudBg.lineBetween(0, HUD_H, W, HUD_H);
+
+        // ── Back button (top-left) ──
+        const backBtn = this.add.text(10, 8, '‹ LEVELS', {
+          fontFamily: 'Orbitron, monospace', fontSize: '11px', color: '#9090b0'
+        }).setInteractive({ useHandCursor: true });
         backBtn.on('pointerover', () => backBtn.setStyle({ color: '#ffffff' }));
         backBtn.on('pointerout',  () => backBtn.setStyle({ color: '#9090b0' }));
         backBtn.on('pointerdown', () => {
@@ -484,65 +493,58 @@ class CandyMatchSceneFactory {
           this.scene.start('CandyLevelSelect');
         });
 
-        // Level badge
-        this.add.text(sideX, 50, `LEVEL ${cfg.level}`, {
-          fontFamily: 'Orbitron, monospace', fontSize: '20px',
+        // ── Level badge (top-left under back btn) ──
+        this.add.text(10, 26, `LVL ${cfg.level}  ${cfg.name}`, {
+          fontFamily: 'Orbitron, monospace', fontSize: '13px',
           color: cfg.accentStr, fontWeight: 'bold'
-        }).setOrigin(0.5).setShadow(0, 0, cfg.accentStr, 6, true, true);
+        }).setShadow(0, 0, cfg.accentStr, 5, true, true);
 
-        this.add.text(sideX, 73, cfg.name, {
-          fontFamily: 'monospace', fontSize: '11px', color: '#ffffff'
+        // ── SCORE section (center-left of HUD) ──
+        const scoreSectX = Math.round(W * 0.38);
+        this.add.text(scoreSectX, 8, 'SCORE', {
+          fontFamily: 'Orbitron, monospace', fontSize: '9px', color: '#aaaacc'
         }).setOrigin(0.5);
-
-        // Score
-        this.add.text(sideX, 115, 'SCORE', {
-          fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#aaaacc'
-        }).setOrigin(0.5);
-        this.scoreText = this.add.text(sideX, 135, '0', {
-          fontFamily: 'Orbitron, monospace', fontSize: '26px',
+        this.scoreText = this.add.text(scoreSectX, 26, '0', {
+          fontFamily: 'Orbitron, monospace', fontSize: '20px',
           color: '#00ffff', fontWeight: 'bold'
         }).setOrigin(0.5);
+        this.scoreText.setShadow(0, 0, '#00ffff', 6, true, true);
 
-        // Target
-        this.add.text(sideX, 165, `TARGET: ${cfg.targetScore.toLocaleString()}`, {
-          fontFamily: 'monospace', fontSize: '11px', color: '#aaaacc'
+        // ── Stars preview (center) ──
+        const starSectX = Math.round(W * 0.55);
+        this.targetText = this.add.text(starSectX, 20, '☆ ☆ ☆', {
+          fontFamily: 'monospace', fontSize: '14px', color: '#404060'
         }).setOrigin(0.5);
 
-        // Progress bar
-        const barX = sideX - 75, barY = 178, barW = 150, barH = 10;
-        this.add.graphics().lineStyle(1, 0x3030a0, 0.8).fillStyle(0x0a0a30, 1)
-          .strokeRoundedRect(barX, barY, barW, barH, 5)
-          .fillRoundedRect(barX, barY, barW, barH, 5);
+        // ── Progress bar under score ──
+        const barW = Math.round(W * 0.28), barH = 6;
+        const barX = Math.round(scoreSectX - barW / 2);
+        const barY = 50;
+        this.add.graphics().fillStyle(0x0a0a30, 1).fillRoundedRect(barX, barY, barW, barH, 3);
         this.progressFill = this.add.graphics();
+        // Store bar metrics on instance for updateProgressBar
+        (this as any)._barX = barX; (this as any)._barY = barY; (this as any)._barW = barW; (this as any)._barH = barH;
         this.updateProgressBar();
 
-        // Stars preview (empty)
-        this.targetText = this.add.text(sideX, 200, '☆ ☆ ☆', {
-          fontFamily: 'monospace', fontSize: '18px', color: '#404060'
+        // ── MOVES section (right of HUD) ──
+        const movesSectX = Math.round(W - 45);
+        this.add.text(movesSectX, 8, 'MOVES', {
+          fontFamily: 'Orbitron, monospace', fontSize: '9px', color: '#aaaacc'
         }).setOrigin(0.5);
-
-        // Moves
-        this.add.text(sideX, 245, 'MOVES', {
-          fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#aaaacc'
-        }).setOrigin(0.5);
-        this.movesText = this.add.text(sideX, 265, `${cfg.moves}`, {
-          fontFamily: 'Orbitron, monospace', fontSize: '36px',
+        this.movesText = this.add.text(movesSectX, 30, `${cfg.moves}`, {
+          fontFamily: 'Orbitron, monospace', fontSize: '28px',
           color: '#ffea00', fontWeight: 'bold'
         }).setOrigin(0.5);
+        this.movesText.setShadow(0, 0, '#ffea00', 6, true, true);
 
-        // Legend
-        this.add.text(sideX, 320, 'SPECIALS:', {
-          fontFamily: 'Orbitron, monospace', fontSize: '10px', color: '#39ff14'
-        }).setOrigin(0.5);
-        const bulletStyle = { fontFamily: 'monospace', fontSize: '10px', color: '#d0d0ff', wordWrap: { width: 185 } };
-        this.add.text(SIDE_X - 88, 338, '⚡ Match-4 → Striped', bulletStyle);
-        this.add.text(SIDE_X - 88, 358, '💥 Match-5 T/L → Wrapped', bulletStyle);
-        this.add.text(SIDE_X - 88, 378, '🌈 Match-5 line → Color Bomb', bulletStyle);
-        if (cfg.iceBlocks.length > 0) {
-          this.add.text(SIDE_X - 88, 400, '🧊 Match next to ice → breaks it!', bulletStyle);
-        }
+        // ── Dividers in HUD ──
+        const divG = this.add.graphics();
+        divG.lineStyle(1, 0x2a2a50, 0.6);
+        [Math.round(W * 0.26), Math.round(W * 0.65)].forEach(dx => {
+          divG.lineBetween(dx, 6, dx, HUD_H - 6);
+        });
 
-        // Particle emitter
+        // ── Particle emitter ──
         this.particleEmitter = this.add.particles(0, 0, 'sparkle', {
           speed: { min: 60, max: 180 },
           angle: { min: 0, max: 360 },
@@ -552,21 +554,24 @@ class CandyMatchSceneFactory {
           emitting: false
         });
 
-        // Bottom help
-        this.add.text(W / 2, H - 18, '🖱️ Click two adjacent candies to swap', {
-          fontFamily: 'monospace', fontSize: '10px', color: '#aaaacc'
+        // ── Bottom hint ──
+        this.add.text(W / 2, H - 10, 'Tap two adjacent candies to swap', {
+          fontFamily: 'monospace', fontSize: '9px', color: '#55556a'
         }).setOrigin(0.5);
       }
 
       updateProgressBar() {
         const cfg = this.levelConfig;
-        const barX = SIDE_X - 75, barY = 178, barW = 150, barH = 10;
+        const barX = (this as any)._barX ?? 0;
+        const barY = (this as any)._barY ?? 50;
+        const barW = (this as any)._barW ?? 100;
+        const barH = (this as any)._barH ?? 6;
         const frac = Math.min(1, this.score / cfg.targetScore);
         if (this.progressFill?.active) {
           this.progressFill.clear();
           if (frac > 0) {
             this.progressFill.fillStyle(cfg.accentColor, 0.95);
-            this.progressFill.fillRoundedRect(barX, barY, barW * frac, barH, 5);
+            this.progressFill.fillRoundedRect(barX, barY, barW * frac, barH, 3);
           }
         }
 
@@ -652,9 +657,11 @@ class CandyMatchSceneFactory {
       }
 
       createCandyAt(row: number, col: number, type: number, special: Candy['special'] = null, startY: number | null = null, iceHp = 0): Candy {
-        const x = BOARD_X + col * TILE_SIZE + TILE_SIZE / 2;
-        const initialY = startY !== null ? startY : BOARD_Y + row * TILE_SIZE + TILE_SIZE / 2;
-        const targetY = BOARD_Y + row * TILE_SIZE + TILE_SIZE / 2;
+        const BX = getBoardX(this.scale.width);
+        const BY = getBoardY();
+        const x = BX + col * TILE_SIZE + TILE_SIZE / 2;
+        const initialY = startY !== null ? startY : BY + row * TILE_SIZE + TILE_SIZE / 2;
+        const targetY = BY + row * TILE_SIZE + TILE_SIZE / 2;
 
         let texKey = `candy-${type}`;
         if (special === 'striped-h') texKey += '-sh';
@@ -736,8 +743,9 @@ class CandyMatchSceneFactory {
         t1.sprite.gridRow = r2; t1.sprite.gridCol = c2;
         t2.sprite.gridRow = r1; t2.sprite.gridCol = c1;
 
-        const x1 = BOARD_X + c1*TILE_SIZE + TILE_SIZE/2, y1 = BOARD_Y + r1*TILE_SIZE + TILE_SIZE/2;
-        const x2 = BOARD_X + c2*TILE_SIZE + TILE_SIZE/2, y2 = BOARD_Y + r2*TILE_SIZE + TILE_SIZE/2;
+        const BX = getBoardX(this.scale.width), BY = getBoardY();
+        const x1 = BX + c1*TILE_SIZE + TILE_SIZE/2, y1 = BY + r1*TILE_SIZE + TILE_SIZE/2;
+        const x2 = BX + c2*TILE_SIZE + TILE_SIZE/2, y2 = BY + r2*TILE_SIZE + TILE_SIZE/2;
 
         playSweep(300, 500, 0.15, 'sine', 0.04);
 
@@ -799,10 +807,11 @@ class CandyMatchSceneFactory {
             if(candy && candy.type===targetType) {
               toClear.push({row:r,col:c});
               // lightning beam
-              const bx = BOARD_X + bombCell.c*TILE_SIZE+TILE_SIZE/2;
-              const by = BOARD_Y + bombCell.r*TILE_SIZE+TILE_SIZE/2;
-              const cx2 = BOARD_X + c*TILE_SIZE+TILE_SIZE/2;
-              const cy2 = BOARD_Y + r*TILE_SIZE+TILE_SIZE/2;
+              const _BX2 = getBoardX(this.scale.width), _BY2 = getBoardY();
+              const bx = _BX2 + bombCell.c*TILE_SIZE+TILE_SIZE/2;
+              const by = _BY2 + bombCell.r*TILE_SIZE+TILE_SIZE/2;
+              const cx2 = _BX2 + c*TILE_SIZE+TILE_SIZE/2;
+              const cy2 = _BY2 + r*TILE_SIZE+TILE_SIZE/2;
               const beam = this.add.graphics();
               beam.lineStyle(3, 0xffea00, 0.95);
               beam.beginPath(); beam.moveTo(bx,by);
@@ -906,8 +915,9 @@ class CandyMatchSceneFactory {
           if(!candy || processed.has(candy)) return;
           processed.add(candy);
 
-          const cx = BOARD_X + cell.col*TILE_SIZE + TILE_SIZE/2;
-          const cy = BOARD_Y + cell.row*TILE_SIZE + TILE_SIZE/2;
+          const _BX3 = getBoardX(this.scale.width), _BY3 = getBoardY();
+          const cx = _BX3 + cell.col*TILE_SIZE + TILE_SIZE/2;
+          const cy = _BY3 + cell.row*TILE_SIZE + TILE_SIZE/2;
 
           // Check adjacent ice
           [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr,dc])=>{
@@ -956,7 +966,8 @@ class CandyMatchSceneFactory {
         const pts = matches.length * 10 * this.cascadeMultiplier;
         this.score += pts;
         if(matches.length >= 5 && this.cascadeMultiplier > 1) {
-          this.showFloatingText(`×${this.cascadeMultiplier} COMBO!`, BOARD_X + GRID_COLS*TILE_SIZE/2, BOARD_Y + GRID_ROWS*TILE_SIZE/2, '#ffd700');
+          const _BX4 = getBoardX(this.scale.width), _BY4 = getBoardY();
+          this.showFloatingText(`×${this.cascadeMultiplier} COMBO!`, _BX4 + GRID_COLS*TILE_SIZE/2, _BY4 + GRID_ROWS*TILE_SIZE/2, '#ffd700');
         }
         this.updateHUD();
 
@@ -979,6 +990,7 @@ class CandyMatchSceneFactory {
       }
 
       applyGravity() {
+        const _BX5 = getBoardX(this.scale.width), _BY5 = getBoardY();
         for(let c=0;c<GRID_COLS;c++){
           let empty=0;
           for(let r=GRID_ROWS-1;r>=0;r--){
@@ -987,7 +999,7 @@ class CandyMatchSceneFactory {
               const tgt=r+empty, candy=this.board[r][c]!;
               this.board[tgt][c]=candy; this.board[r][c]=null;
               candy.sprite.gridRow=tgt;
-              const ty=BOARD_Y+tgt*TILE_SIZE+TILE_SIZE/2;
+              const ty=_BY5+tgt*TILE_SIZE+TILE_SIZE/2;
               this.tweens.add({targets:candy.sprite,y:ty,duration:230,ease:'Bounce.easeOut'});
               if(candy.iceSprite) this.tweens.add({targets:candy.iceSprite,y:ty,duration:230,ease:'Bounce.easeOut'});
             }
@@ -995,7 +1007,7 @@ class CandyMatchSceneFactory {
           // Fill from top
           for(let i=0;i<empty;i++){
             const tgtRow=empty-1-i, type=Math.floor(Math.random()*this.activeCandyTypes);
-            const startY=BOARD_Y-(i+1)*TILE_SIZE-10;
+            const startY=_BY5-(i+1)*TILE_SIZE-10;
             this.createCandyAt(tgtRow,c,type,null,startY,0);
           }
         }
@@ -1059,7 +1071,8 @@ class CandyMatchSceneFactory {
         // Celebration particles burst
         for(let i=0;i<8;i++){
           this.time.delayedCall(i*80, ()=>{
-            const bx=BOARD_X+Math.random()*GRID_COLS*TILE_SIZE, by=BOARD_Y+Math.random()*GRID_ROWS*TILE_SIZE;
+            const _BXp = getBoardX(this.scale.width), _BYp = getBoardY();
+            const bx=_BXp+Math.random()*GRID_COLS*TILE_SIZE, by=_BYp+Math.random()*GRID_ROWS*TILE_SIZE;
             this.particleEmitter.explode(15, bx, by);
           });
         }
