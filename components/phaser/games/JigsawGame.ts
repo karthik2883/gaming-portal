@@ -1004,6 +1004,124 @@ export default class JigsawGameFactory {
           ctx.fill();
           ctx.shadowBlur = 0;
         }
+      },
+      {
+        name: 'Desert Camel',
+        location: 'Sahara White Sands',
+        color: 0xe67e22,
+        glow: '#e67e22',
+        secondary: 0xd35400,
+        draw: (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+          // White/light cream desert sky background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, W, H);
+
+          // Subtle sun glow (soft yellow circle fading to white background)
+          const sunGrad = ctx.createRadialGradient(W * 0.7, H * 0.3, 10, W * 0.7, H * 0.3, 120);
+          sunGrad.addColorStop(0, '#fff9e6');
+          sunGrad.addColorStop(0.3, '#fff2cc');
+          sunGrad.addColorStop(1, '#ffffff');
+          ctx.fillStyle = sunGrad;
+          ctx.beginPath();
+          ctx.arc(W * 0.7, H * 0.3, 120, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Dune 1 (Distant sand dune - warm light orange)
+          ctx.fillStyle = '#fcebd5';
+          ctx.beginPath();
+          ctx.moveTo(-20, H - 180);
+          ctx.quadraticCurveTo(W * 0.3, H - 240, W * 0.6, H - 160);
+          ctx.quadraticCurveTo(W * 0.85, H - 120, W + 20, H - 190);
+          ctx.lineTo(W + 20, H + 20);
+          ctx.lineTo(-20, H + 20);
+          ctx.closePath();
+          ctx.fill();
+
+          // Dune 2 (Midground sand dune - rich golden terracotta orange)
+          ctx.fillStyle = '#e67e22';
+          ctx.beginPath();
+          ctx.moveTo(-20, H - 110);
+          ctx.quadraticCurveTo(W * 0.45, H - 60, W * 0.75, H - 130);
+          ctx.quadraticCurveTo(W * 0.9, H - 150, W + 20, H - 110);
+          ctx.lineTo(W + 20, H + 20);
+          ctx.lineTo(-20, H + 20);
+          ctx.closePath();
+          ctx.fill();
+
+          // Dune 3 (Foreground sand dune - deep chocolate camel brown)
+          ctx.fillStyle = '#d35400';
+          ctx.beginPath();
+          ctx.moveTo(-20, H - 50);
+          ctx.quadraticCurveTo(W * 0.25, H - 100, W * 0.55, H - 40);
+          ctx.quadraticCurveTo(W * 0.8, H - 20, W + 20, H - 70);
+          ctx.lineTo(W + 20, H + 20);
+          ctx.lineTo(-20, H + 20);
+          ctx.closePath();
+          ctx.fill();
+
+          // ── CAMEL SILHOUETTE (Deep contrasting dark brown/terracotta on midground dune) ──
+          const cx = W * 0.48;
+          const cy = H - 115;
+
+          // Back leg
+          ctx.fillStyle = '#4a2306';
+          ctx.fillRect(cx - 20, cy, 3.5, 30);
+          ctx.fillRect(cx - 20, cy + 28, 6, 2.5); // foot
+          // Front leg
+          ctx.fillRect(cx + 12, cy, 3.5, 30);
+          ctx.fillRect(cx + 12, cy + 28, 6, 2.5); // foot
+          
+          // Inner legs (slightly offset and darker)
+          ctx.fillStyle = '#311603';
+          ctx.fillRect(cx - 13, cy, 3.5, 30);
+          ctx.fillRect(cx - 13, cy + 28, 6, 2.5);
+          ctx.fillRect(cx + 4, cy, 3.5, 30);
+          ctx.fillRect(cx + 4, cy + 28, 6, 2.5);
+          
+          ctx.fillStyle = '#4a2306'; // restore camel primary color
+
+          // Torso / Body
+          ctx.beginPath();
+          ctx.ellipse(cx - 3, cy - 2, 22, 11, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Camel Humps (classic double humps!)
+          ctx.beginPath();
+          ctx.arc(cx - 10, cy - 11, 10, 0, Math.PI * 2); // rear hump
+          ctx.arc(cx + 5, cy - 11, 9, 0, Math.PI * 2);  // front hump
+          ctx.fill();
+
+          // Long curved neck
+          ctx.beginPath();
+          ctx.moveTo(cx + 14, cy - 4);
+          ctx.quadraticCurveTo(cx + 28, cy - 12, cx + 22, cy - 26);
+          ctx.quadraticCurveTo(cx + 20, cy - 32, cx + 24, cy - 35);
+          ctx.lineTo(cx + 14, cy - 35);
+          ctx.quadraticCurveTo(cx + 12, cy - 20, cx + 6, cy - 6);
+          ctx.closePath();
+          ctx.fill();
+
+          // Head & Ears
+          ctx.beginPath();
+          ctx.ellipse(cx + 20, cy - 35, 7, 4, 0.2, 0, Math.PI * 2);
+          ctx.fill();
+          // Ear
+          ctx.beginPath();
+          ctx.ellipse(cx + 16, cy - 39, 1.5, 3, -0.4, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Tail
+          ctx.strokeStyle = '#4a2306';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(cx - 22, cy - 4);
+          ctx.quadraticCurveTo(cx - 28, cy + 5, cx - 25, cy + 18);
+          ctx.stroke();
+          // Tail tuft
+          ctx.beginPath();
+          ctx.arc(cx - 25, cy + 18, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     ];
 
@@ -1149,18 +1267,18 @@ export default class JigsawGameFactory {
           fontFamily: 'monospace', fontSize: '12px', color: '#687e9c',
         }).setOrigin(0.5);
 
-        // 8 Level Selector Thumbnails in a clean 4-column layout (prevents bottom overlap)
-        const tW = 120;
-        const tH = 90;
-        const gap = 24;
+        // 9 Level Selector Thumbnails in a clean 4-column layout (spatially optimized)
+        const tW = 110;
+        const tH = 82;
+        const gap = 18;
         const startX = W / 2 - (4 * tW + 3 * gap) / 2 + tW / 2;
-        const startY = 175;
+        const startY = 140;
 
         LEVELS.forEach((level, i) => {
           const col = i % 4;
           const row = Math.floor(i / 4);
           const lx = startX + col * (tW + gap);
-          const ly = startY + row * (tH + gap + 35);
+          const ly = startY + row * (tH + gap + 24);
 
           // Render level thumbnail canvas
           const thumbKey = `thumb-level-${i}`;
@@ -1215,13 +1333,13 @@ export default class JigsawGameFactory {
         });
 
         // Difficulty Settings buttons (bottom)
-        this.add.text(W / 2, H - 110, 'DIFFICULTY', {
+        this.add.text(W / 2, H - 92, 'DIFFICULTY', {
           fontFamily: 'Orbitron, sans-serif', fontSize: '11px', color: '#687e9c', letterSpacing: 2,
         }).setOrigin(0.5);
 
         const diffs = ['easy', 'medium', 'hard'];
         const dX = [W / 2 - 110, W / 2, W / 2 + 110];
-        const dY = H - 64;
+        const dY = H - 56;
 
         this.selectedDiff = this.selectedDiff || 'medium';
         const dBtns: any[] = [];
