@@ -1398,6 +1398,262 @@ export default class JigsawGameFactory {
             ctx.fillText(line, bubbleX + 16, bubbleY + 24 + idx * 18);
           });
         }
+      },
+      {
+        name: 'Rooftop Fate',
+        location: 'City Rooftops',
+        color: 0x9b59b6,
+        glow: '#9b59b6',
+        secondary: 0x8e44ad,
+        draw: (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+          // Night sky background
+          const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+          skyGrad.addColorStop(0, '#060614');
+          skyGrad.addColorStop(0.6, '#0f0c24');
+          skyGrad.addColorStop(1, '#2c163f');
+          ctx.fillStyle = skyGrad;
+          ctx.fillRect(0, 0, W, H);
+
+          // Distant crescent moon
+          ctx.fillStyle = '#fff6d5';
+          ctx.beginPath();
+          ctx.arc(W * 0.82, H * 0.22, 28, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#060614'; // sky mask to make crescent
+          ctx.beginPath();
+          ctx.arc(W * 0.79, H * 0.19, 28, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Distant city silhouette
+          ctx.fillStyle = '#0a0518';
+          const buildings = [
+            { x: 0, w: 90, h: 220 },
+            { x: 80, w: 110, h: 280 },
+            { x: 180, w: 75, h: 190 },
+            { x: 240, w: 130, h: 320 },
+            { x: 360, w: 100, h: 240 },
+            { x: 450, w: 85, h: 270 },
+            { x: 520, w: 110, h: 180 }
+          ];
+          buildings.forEach(b => {
+            ctx.fillRect(b.x, H - b.h, b.w, b.h);
+            // Draw tiny glowing yellow windows
+            ctx.fillStyle = 'rgba(255, 235, 120, 0.25)';
+            for (let wx = b.x + 15; wx < b.x + b.w - 15; wx += 25) {
+              for (let wy = H - b.h + 30; wy < H - 50; wy += 45) {
+                if (Math.random() > 0.4) {
+                  ctx.fillRect(wx, wy, 8, 12);
+                }
+              }
+            }
+            ctx.fillStyle = '#0a0518';
+          });
+
+          // ── ROOFTOP LEDGE (Foreground building edge - grey brick/concrete) ──
+          const roofY = H * 0.5; // Rooftop line splits screen horizontally in middle
+          ctx.fillStyle = '#1c1c24';
+          ctx.fillRect(0, roofY, W, H - roofY);
+
+          // Ledge top concrete slab (horizontal bar)
+          ctx.fillStyle = '#2d2d38';
+          ctx.fillRect(0, roofY, W, 18);
+          // Dark line below slab
+          ctx.fillStyle = '#111116';
+          ctx.fillRect(0, roofY + 18, W, 4);
+
+          // Brick pattern on building wall
+          ctx.strokeStyle = '#14141a';
+          ctx.lineWidth = 1;
+          for (let y = roofY + 30; y < H; y += 22) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(W, y);
+            ctx.stroke();
+            const shift = (Math.floor(y / 22) % 2) * 20;
+            for (let x = shift; x < W; x += 40) {
+              ctx.beginPath();
+              ctx.moveTo(x, y);
+              ctx.lineTo(x, y + 22);
+              ctx.stroke();
+            }
+          }
+
+          // ── DRAW JIGSAW (Standing securely on roof) ──
+          const jx = W * 0.44;
+          const jy = roofY;
+
+          // Back hood outline (black/red lining)
+          ctx.fillStyle = '#110202';
+          ctx.beginPath();
+          ctx.moveTo(jx - 25, jy - 5);
+          ctx.quadraticCurveTo(jx - 20, jy - 75, jx, jy - 75);
+          ctx.quadraticCurveTo(jx + 20, jy - 75, jx + 25, jy - 5);
+          ctx.closePath();
+          ctx.fill();
+
+          // Red Hood Lining Inside
+          ctx.strokeStyle = '#c0392b';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(jx - 20, jy - 5);
+          ctx.quadraticCurveTo(jx - 15, jy - 70, jx, jy - 70);
+          ctx.quadraticCurveTo(jx + 15, jy - 70, jx + 20, jy - 5);
+          ctx.stroke();
+
+          // Black Robe / Body
+          ctx.fillStyle = '#0f0c0f';
+          ctx.beginPath();
+          ctx.moveTo(jx - 32, jy);
+          ctx.lineTo(jx - 20, jy - 45);
+          ctx.lineTo(jx + 20, jy - 45);
+          ctx.lineTo(jx + 32, jy);
+          ctx.closePath();
+          ctx.fill();
+
+          // Pig Mask Face (classic SAW mask)
+          ctx.fillStyle = '#fce4d6'; // pale pinkish pig skin
+          ctx.beginPath();
+          ctx.ellipse(jx, jy - 46, 12, 15, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Pig Snout
+          ctx.fillStyle = '#e59866';
+          ctx.beginPath();
+          ctx.ellipse(jx, jy - 41, 5, 3.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Snout nostrils
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(jx - 1.5, jy - 41, 1, 0, Math.PI * 2);
+          ctx.arc(jx + 1.5, jy - 41, 1, 0, Math.PI * 2);
+          ctx.fill();
+          // Black hair strands hanging down Pig Mask
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(jx - 9, jy - 56);
+          ctx.quadraticCurveTo(jx - 13, jy - 46, jx - 12, jy - 36);
+          ctx.moveTo(jx + 9, jy - 56);
+          ctx.quadraticCurveTo(jx + 13, jy - 46, jx + 12, jy - 36);
+          ctx.stroke();
+
+          // Jigsaw Extended Arm holding Mob Boss
+          ctx.fillStyle = '#0f0c0f'; // black sleeve
+          ctx.beginPath();
+          ctx.moveTo(jx + 16, jy - 30);
+          ctx.lineTo(jx + 55, jy + 10); // Arm pointing down over ledge
+          ctx.lineTo(jx + 45, jy + 14);
+          ctx.lineTo(jx + 10, jy - 22);
+          ctx.closePath();
+          ctx.fill();
+
+          // Jigsaw Hand (black leather glove)
+          const hx = jx + 53;
+          const hy = jy + 12;
+          ctx.fillStyle = '#111116';
+          ctx.beginPath();
+          ctx.arc(hx, hy, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          // ── DRAW MOB BOSS (Dangling off edge, screaming) ──
+          const mx = jx + 60; // offset right, directly under hand
+          const my = roofY + 45; // hanging down from hand/collar
+
+          // Suited body (Hanging vertically)
+          ctx.fillStyle = '#2c3e50'; // blue-grey suit jacket
+          ctx.beginPath();
+          ctx.moveTo(mx - 24, my);
+          ctx.lineTo(mx + 24, my);
+          ctx.lineTo(mx + 18, my + 80);
+          ctx.lineTo(mx - 18, my + 80);
+          ctx.closePath();
+          ctx.fill();
+
+          // Pinstripes on Mob Boss suit
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+          ctx.lineWidth = 1;
+          for (let sx = mx - 20; sx <= mx + 20; sx += 8) {
+            ctx.beginPath();
+            ctx.moveTo(sx, my);
+            ctx.lineTo(sx * 0.9 + mx * 0.1, my + 80);
+            ctx.stroke();
+          }
+
+          // Flailing Arms (Hands gripping air)
+          ctx.strokeStyle = '#2c3e50';
+          ctx.lineWidth = 7;
+          // Left flailing arm (pointing up/outward)
+          ctx.beginPath();
+          ctx.moveTo(mx - 18, my + 15);
+          ctx.lineTo(mx - 42, my - 5);
+          ctx.stroke();
+          // Right flailing arm
+          ctx.beginPath();
+          ctx.moveTo(mx + 18, my + 15);
+          ctx.lineTo(mx + 40, my + 5);
+          ctx.stroke();
+
+          // Mob Boss Hands (Pale terrified skin)
+          ctx.fillStyle = '#f5cba7';
+          ctx.beginPath();
+          ctx.arc(mx - 42, my - 5, 5, 0, Math.PI * 2);
+          ctx.arc(mx + 40, my + 5, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Neck tie (red, flying upward due to fall/wind)
+          ctx.fillStyle = '#e74c3c';
+          ctx.beginPath();
+          ctx.moveTo(mx - 2, my + 4);
+          ctx.quadraticCurveTo(mx - 18, my - 12, mx - 28, my - 16);
+          ctx.quadraticCurveTo(mx - 15, my - 6, mx + 2, my + 4);
+          ctx.closePath();
+          ctx.fill();
+
+          // Head (Facing up/screaming)
+          const hHeadY = my - 16;
+          ctx.fillStyle = '#f5cba7';
+          ctx.beginPath();
+          ctx.arc(mx, hHeadY, 13, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Hair (slicked back mobster style)
+          ctx.fillStyle = '#2c1a0c'; // brown hair
+          ctx.beginPath();
+          ctx.arc(mx, hHeadY - 4, 13, Math.PI, 0); // top hair
+          ctx.fill();
+
+          // Terrified eyes (wide open)
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(mx - 5, hHeadY - 3, 2.5, 0, Math.PI * 2);
+          ctx.arc(mx + 5, hHeadY - 3, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(mx - 5, hHeadY - 3, 1, 0, Math.PI * 2);
+          ctx.arc(mx + 5, hHeadY - 3, 1, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Screaming mouth (Big open black oval)
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.ellipse(mx, hHeadY + 5, 5, 7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Red tongue inside screaming mouth
+          ctx.fillStyle = '#e74c3c';
+          ctx.beginPath();
+          ctx.ellipse(mx, hHeadY + 9, 3, 2.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Screaming sweat/tear drops (comic lines)
+          ctx.strokeStyle = '#3498db';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(mx - 18, hHeadY - 10);
+          ctx.lineTo(mx - 24, hHeadY - 14);
+          ctx.moveTo(mx + 18, hHeadY - 10);
+          ctx.lineTo(mx + 24, hHeadY - 14);
+          ctx.stroke();
+        }
       }
     ];
 
