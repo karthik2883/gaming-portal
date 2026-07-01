@@ -143,14 +143,14 @@ const LEVELS = [
       { r: 2, c: 1, len: 2, dir: 'H', isTarget: true },
       { r: 0, c: 0, len: 3, dir: 'V' },
       { r: 0, c: 1, len: 2, dir: 'H' },
-      { r: 0, c: 3, len: 3, dir: 'V' },
+      { r: 0, c: 3, len: 2, dir: 'V' },
       { r: 0, c: 4, len: 2, dir: 'H' },
-      { r: 1, c: 5, len: 3, dir: 'V' },
+      { r: 1, c: 4, len: 2, dir: 'V' },
       { r: 3, c: 1, len: 2, dir: 'H' },
-      { r: 3, c: 4, len: 2, dir: 'V' },
-      { r: 4, c: 1, len: 3, dir: 'H' },
-      { r: 4, c: 0, len: 2, dir: 'V' },
-      { r: 5, c: 1, len: 3, dir: 'H' }
+      { r: 3, c: 3, len: 3, dir: 'V' },
+      { r: 4, c: 0, len: 2, dir: 'H' },
+      { r: 4, c: 2, len: 2, dir: 'V' },
+      { r: 5, c: 4, len: 2, dir: 'H' }
     ]
   },
   {
@@ -163,7 +163,6 @@ const LEVELS = [
       { r: 0, c: 1, len: 3, dir: 'H' },
       { r: 0, c: 4, len: 2, dir: 'V' },
       { r: 0, c: 5, len: 2, dir: 'V' },
-      { r: 1, c: 1, len: 2, dir: 'V' },
       { r: 3, c: 0, len: 2, dir: 'H' },
       { r: 3, c: 2, len: 3, dir: 'V' },
       { r: 3, c: 3, len: 3, dir: 'V' },
