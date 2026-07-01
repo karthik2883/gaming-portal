@@ -1122,6 +1122,282 @@ export default class JigsawGameFactory {
           ctx.arc(cx - 25, cy + 18, 2, 0, Math.PI * 2);
           ctx.fill();
         }
+      },
+      {
+        name: 'SAW Gravity',
+        location: 'Jigsaw Chamber',
+        color: 0xff0033,
+        glow: '#ff0033',
+        secondary: 0x990011,
+        draw: (ctx: CanvasRenderingContext2D, W: number, H: number) => {
+          // Fill background with dark room/chamber
+          ctx.fillStyle = '#0a0a0f';
+          ctx.fillRect(0, 0, W, H);
+
+          // Subtle metallic background pattern (vertical bars)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+          for (let x = 0; x < W; x += 40) {
+            ctx.fillRect(x, 0, 15, H);
+          }
+
+          // ── CRT Television Monitor Outer Bezel ──
+          const screenX = 35;
+          const screenY = 30;
+          const screenW = W - 70;
+          const screenH = H - 80;
+
+          // Outer Bezel shadow/glow
+          ctx.shadowColor = '#000000';
+          ctx.shadowBlur = 15;
+          ctx.fillStyle = '#1e1e24';
+          ctx.beginPath();
+          // Draw standard rect as fallback for browsers without roundRect
+          if (ctx.roundRect) {
+            ctx.roundRect(screenX - 10, screenY - 10, screenW + 20, screenH + 20, 12);
+          } else {
+            ctx.rect(screenX - 10, screenY - 10, screenW + 20, screenH + 20);
+          }
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Bezel inner border
+          ctx.strokeStyle = '#2d2d35';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(screenX - 5, screenY - 5, screenW + 10, screenH + 10, 8);
+          } else {
+            ctx.rect(screenX - 5, screenY - 5, screenW + 10, screenH + 10);
+          }
+          ctx.stroke();
+
+          // Monitor stand at bottom
+          ctx.fillStyle = '#15151b';
+          ctx.beginPath();
+          ctx.moveTo(W / 2 - 50, screenY + screenH + 10);
+          ctx.lineTo(W / 2 + 50, screenY + screenH + 10);
+          ctx.lineTo(W / 2 + 70, H - 15);
+          ctx.lineTo(W / 2 - 70, H - 15);
+          ctx.closePath();
+          ctx.fill();
+
+          // Screen surface (inside monitor)
+          ctx.fillStyle = '#050508';
+          ctx.fillRect(screenX, screenY, screenW, screenH);
+
+          // Faint scanlines on TV screen
+          ctx.fillStyle = 'rgba(0, 255, 255, 0.03)';
+          for (let y = screenY; y < screenY + screenH; y += 3) {
+            ctx.fillRect(screenX, y, screenW, 1.2);
+          }
+
+          // Drifting dust particles in the background
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+          const dustPositions = [
+            [120, 180, 2.5], [190, 80, 1.5], [160, 240, 2.0], [280, 140, 3.0], 
+            [320, 260, 1.8], [420, 90, 2.2], [480, 210, 1.2], [520, 120, 2.8]
+          ];
+          dustPositions.forEach(([dx, dy, size]) => {
+            ctx.beginPath();
+            ctx.arc(dx, dy, size, 0, Math.PI * 2);
+            ctx.fill();
+            // Faint glow on dust
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.beginPath();
+            ctx.arc(dx, dy, size * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+          });
+
+          // ── DRAW BILLY THE PUPPET ──
+          const bx = screenX + 110;
+          const by = screenY + screenH / 2 + 10;
+
+          // Hair (Black messy mass behind head)
+          ctx.fillStyle = '#0c0c0e';
+          ctx.beginPath();
+          ctx.ellipse(bx, by - 12, 42, 45, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // Messy strands on sides
+          ctx.beginPath();
+          ctx.arc(bx - 36, by, 18, 0, Math.PI * 2);
+          ctx.arc(bx + 36, by, 18, 0, Math.PI * 2);
+          ctx.arc(bx - 32, by - 25, 14, 0, Math.PI * 2);
+          ctx.arc(bx + 32, by - 25, 14, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Neck / Collar
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(bx - 12, by + 35, 24, 20);
+
+          // Black Suit / Shoulders
+          ctx.fillStyle = '#0c0c0e';
+          ctx.beginPath();
+          ctx.moveTo(bx - 50, by + 75);
+          ctx.lineTo(bx - 20, by + 45);
+          ctx.lineTo(bx + 20, by + 45);
+          ctx.lineTo(bx + 50, by + 75);
+          ctx.closePath();
+          ctx.fill();
+
+          // Red Bowtie
+          ctx.fillStyle = '#c0392b';
+          ctx.beginPath();
+          ctx.moveTo(bx, by + 48);
+          ctx.lineTo(bx - 18, by + 40);
+          ctx.lineTo(bx - 18, by + 56);
+          ctx.lineTo(bx, by + 48);
+          ctx.lineTo(bx + 18, by + 40);
+          ctx.lineTo(bx + 18, by + 56);
+          ctx.closePath();
+          ctx.fill();
+          // Center knot
+          ctx.fillStyle = '#e74c3c';
+          ctx.beginPath();
+          ctx.arc(bx, by + 48, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Face mask (White oval skin)
+          ctx.fillStyle = '#f0f3f4';
+          ctx.beginPath();
+          ctx.ellipse(bx, by - 5, 30, 38, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Jaw / Cheek outline
+          ctx.strokeStyle = '#d5dbdb';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.ellipse(bx, by - 5, 30, 38, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Ventriloquist mouth lines (chin/jaw cuts)
+          ctx.strokeStyle = '#7f8c8d';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(bx - 10, by + 16);
+          ctx.lineTo(bx - 10, by + 33);
+          ctx.moveTo(bx + 10, by + 16);
+          ctx.lineTo(bx + 10, by + 33);
+          ctx.stroke();
+
+          // Black eye sockets
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.ellipse(bx - 11, by - 12, 7, 5, 0.1, 0, Math.PI * 2);
+          ctx.ellipse(bx + 11, by - 12, 7, 5, -0.1, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Red glowing eyes
+          ctx.fillStyle = '#e74c3c';
+          ctx.beginPath();
+          ctx.arc(bx - 11, by - 12, 2.5, 0, Math.PI * 2);
+          ctx.arc(bx + 11, by - 12, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          // Glow effect
+          ctx.fillStyle = 'rgba(231, 76, 60, 0.4)';
+          ctx.beginPath();
+          ctx.arc(bx - 11, by - 12, 5.5, 0, Math.PI * 2);
+          ctx.arc(bx + 11, by - 12, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Red cheek spirals (SAW Signature)
+          ctx.strokeStyle = '#c0392b';
+          ctx.lineWidth = 2;
+          // Left cheek spiral
+          ctx.beginPath();
+          const lcx = bx - 19, lcy = by + 6;
+          for (let theta = 0; theta < Math.PI * 3.5; theta += 0.1) {
+            const r = 1.8 * theta;
+            const sx = lcx + r * Math.cos(theta);
+            const sy = lcy + r * Math.sin(theta);
+            if (theta === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+
+          // Right cheek spiral
+          ctx.beginPath();
+          const rcx = bx + 19, rcy = by + 6;
+          for (let theta = 0; theta < Math.PI * 3.5; theta += 0.1) {
+            const r = 1.8 * theta;
+            const sx = rcx - r * Math.cos(theta); // mirror horizontally
+            const sy = rcy + r * Math.sin(theta);
+            if (theta === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+
+          // Nose (pointed dark/grey shape)
+          ctx.fillStyle = '#bdc3c7';
+          ctx.beginPath();
+          ctx.moveTo(bx, by - 8);
+          ctx.lineTo(bx - 4, by + 3);
+          ctx.lineTo(bx + 4, by + 3);
+          ctx.closePath();
+          ctx.fill();
+
+          // Red Lipstick Mouth / Grin
+          ctx.fillStyle = '#900c3f';
+          ctx.beginPath();
+          ctx.moveTo(bx - 14, by + 12);
+          ctx.quadraticCurveTo(bx, by + 18, bx + 14, by + 12);
+          ctx.quadraticCurveTo(bx, by + 23, bx - 14, by + 12);
+          ctx.fill();
+
+          // ── SPEECH BUBBLE ──
+          const bubbleX = bx + 70;
+          const bubbleY = screenY + 45;
+          const bubbleW = screenW - (bubbleX - screenX) - 15;
+          const bubbleH = screenH - 85;
+
+          // Speech bubble card back
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#e74c3c';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(bubbleX, bubbleY, bubbleW, bubbleH, 12);
+          } else {
+            ctx.rect(bubbleX, bubbleY, bubbleW, bubbleH);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          // Pointer/Tail from bubble to Billy's mouth
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#e74c3c';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(bubbleX + 15, bubbleY + bubbleH - 2);
+          ctx.lineTo(bx + 35, by + 8);
+          ctx.lineTo(bubbleX + 35, bubbleY + bubbleH - 2);
+          // Fill tail without border crossing
+          ctx.fill();
+          // Draw border lines for the tail
+          ctx.beginPath();
+          ctx.moveTo(bubbleX + 15, bubbleY + bubbleH - 2);
+          ctx.lineTo(bx + 35, by + 8);
+          ctx.lineTo(bubbleX + 35, bubbleY + bubbleH - 2);
+          ctx.stroke();
+          // Re-draw small white line to cover bubble inside border
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(bubbleX + 12, bubbleY + bubbleH - 4, 25, 6);
+
+          // Speech Bubble Text
+          ctx.fillStyle = '#111116';
+          ctx.font = 'bold 12px monospace';
+          const lines = [
+            "Hello, Arthur.",
+            "For years, you have taken",
+            "gravity for granted.",
+            "Today, we see if you can",
+            "handle the weightlessness",
+            "of your choices."
+          ];
+          lines.forEach((line, idx) => {
+            ctx.fillText(line, bubbleX + 16, bubbleY + 24 + idx * 18);
+          });
+        }
       }
     ];
 
