@@ -1149,18 +1149,18 @@ export default class JigsawGameFactory {
           fontFamily: 'monospace', fontSize: '12px', color: '#687e9c',
         }).setOrigin(0.5);
 
-        // 6 Level Selector Thumbnails
-        const tW = 100;
-        const tH = 75;
-        const gap = 16;
-        const startX = W / 2 - (3 * tW + 2 * gap) / 2 + tW / 2;
-        const startY = 190;
+        // 8 Level Selector Thumbnails in a clean 4-column layout (prevents bottom overlap)
+        const tW = 120;
+        const tH = 90;
+        const gap = 24;
+        const startX = W / 2 - (4 * tW + 3 * gap) / 2 + tW / 2;
+        const startY = 175;
 
         LEVELS.forEach((level, i) => {
-          const col = i % 3;
-          const row = Math.floor(i / 3);
+          const col = i % 4;
+          const row = Math.floor(i / 4);
           const lx = startX + col * (tW + gap);
-          const ly = startY + row * (tH + gap + 30);
+          const ly = startY + row * (tH + gap + 35);
 
           // Render level thumbnail canvas
           const thumbKey = `thumb-level-${i}`;
@@ -1181,12 +1181,12 @@ export default class JigsawGameFactory {
           img.setInteractive({ cursor: 'pointer' });
 
           const lbl = this.add.text(lx, ly + tH / 2 + 14, level.name.toUpperCase(), {
-            fontFamily: 'Orbitron, sans-serif', fontSize: '9px',
+            fontFamily: 'Orbitron, sans-serif', fontSize: '9.5px',
             color: '#a0aed0', fontStyle: 'bold',
           }).setOrigin(0.5);
 
           const loc = this.add.text(lx, ly + tH / 2 + 25, level.location, {
-            fontFamily: 'monospace', fontSize: '7px', color: '#4c5e7b',
+            fontFamily: 'monospace', fontSize: '7.5px', color: '#4c5e7b',
           }).setOrigin(0.5);
 
           // Select state
@@ -1215,13 +1215,13 @@ export default class JigsawGameFactory {
         });
 
         // Difficulty Settings buttons (bottom)
-        this.add.text(W / 2, H - 98, 'DIFFICULTY', {
+        this.add.text(W / 2, H - 110, 'DIFFICULTY', {
           fontFamily: 'Orbitron, sans-serif', fontSize: '11px', color: '#687e9c', letterSpacing: 2,
         }).setOrigin(0.5);
 
         const diffs = ['easy', 'medium', 'hard'];
         const dX = [W / 2 - 110, W / 2, W / 2 + 110];
-        const dY = H - 68;
+        const dY = H - 64;
 
         this.selectedDiff = this.selectedDiff || 'medium';
         const dBtns: any[] = [];
@@ -1537,62 +1537,105 @@ export default class JigsawGameFactory {
         // Scatter all pieces around board
         this.scatterPieces();
 
-        // ── CONTROLS / TOOLBAR ───────────────────────────────────────────────
-        const bX = W / 2 - 140;
-        const bY = H - 40;
+        // ── CONTROLS / TOOLBAR (Centered & Glowing Neon Design) ────────────────
+        const btnW = 120;
+        const btnH = 36;
+        const bY = H - 32;
 
-        // Preview button
+        const drawBtn = (gfx: any, x: number, y: number, color: number, isHover: boolean, isActive: boolean) => {
+          gfx.clear();
+          if (isActive) {
+            gfx.fillStyle(color, 0.35);
+            gfx.lineStyle(2.5, color, 1);
+          } else if (isHover) {
+            gfx.fillStyle(color, 0.2);
+            gfx.lineStyle(2.5, color, 1);
+          } else {
+            gfx.fillStyle(0x070612, 0.9);
+            gfx.lineStyle(1.8, color, 0.45);
+          }
+          gfx.fillRoundedRect(x - btnW / 2, y - btnH / 2, btnW, btnH, 8);
+          gfx.strokeRoundedRect(x - btnW / 2, y - btnH / 2, btnW, btnH, 8);
+        };
+
+        // 1. GUIDE Button
+        const gX = W / 2 - 140;
         const btnPrev = this.add.graphics();
-        btnPrev.fillStyle(0x1a1a2e, 0.8);
-        btnPrev.lineStyle(1.5, level.color, 0.8);
-        btnPrev.fillRoundedRect(bX - 50, bY - 18, 90, 32, 6);
-        btnPrev.strokeRoundedRect(bX - 50, bY - 18, 90, 32, 6);
-        const txtPrev = this.add.text(bX, bY, '👁 GUIDE', {
-          fontFamily: 'Orbitron, sans-serif', fontSize: '10px', color: '#c5d5f0', fontStyle: 'bold',
+        drawBtn(btnPrev, gX, bY, level.color, false, false);
+
+        const txtPrev = this.add.text(gX, bY, '👁 GUIDE', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '10.5px', color: '#ffffff', fontStyle: 'bold',
         }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
 
+        txtPrev.on('pointerover', () => {
+          drawBtn(btnPrev, gX, bY, level.color, true, false);
+          txtPrev.setColor('#ffffff');
+        });
+        txtPrev.on('pointerout', () => {
+          drawBtn(btnPrev, gX, bY, level.color, false, false);
+          txtPrev.setColor(this.guideActive ? `#${level.color.toString(16).padStart(6, '0')}` : '#ffffff');
+        });
         txtPrev.on('pointerdown', () => {
           this.guideActive = !this.guideActive;
           this.guideImg.setAlpha(this.guideActive ? 0.28 : 0);
-          txtPrev.setColor(this.guideActive ? '#00ffff' : '#c5d5f0');
+          drawBtn(btnPrev, gX, bY, level.color, true, true);
+          txtPrev.setColor(this.guideActive ? `#${level.color.toString(16).padStart(6, '0')}` : '#ffffff');
           this.playTone(400, 'sine', 0.08, 0.05);
         });
-        txtPrev.on('pointerover', () => btnPrev.setAlpha(1.5));
-        txtPrev.on('pointerout',  () => btnPrev.setAlpha(1));
+        txtPrev.on('pointerup', () => {
+          drawBtn(btnPrev, gX, bY, level.color, true, false);
+        });
 
-        // Scatter button
+        // 2. SCATTER Button
+        const sX = W / 2;
         const btnScatter = this.add.graphics();
-        btnScatter.fillStyle(0x1a1a2e, 0.8);
-        btnScatter.lineStyle(1.5, level.color, 0.8);
-        btnScatter.fillRoundedRect(bX + 60, bY - 18, 90, 32, 6);
-        btnScatter.strokeRoundedRect(bX + 60, bY - 18, 90, 32, 6);
-        const txtScatter = this.add.text(bX + 105, bY, '⚡ SCATTER', {
-          fontFamily: 'Orbitron, sans-serif', fontSize: '10px', color: '#c5d5f0', fontStyle: 'bold',
+        drawBtn(btnScatter, sX, bY, level.color, false, false);
+
+        const txtScatter = this.add.text(sX, bY, '⚡ SCATTER', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '10.5px', color: '#ffffff', fontStyle: 'bold',
         }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
 
+        txtScatter.on('pointerover', () => {
+          drawBtn(btnScatter, sX, bY, level.color, true, false);
+        });
+        txtScatter.on('pointerout', () => {
+          drawBtn(btnScatter, sX, bY, level.color, false, false);
+        });
         txtScatter.on('pointerdown', () => {
+          drawBtn(btnScatter, sX, bY, level.color, true, true);
           this.scatterPieces();
           this.playTone(330, 'sine', 0.1, 0.06);
         });
-        txtScatter.on('pointerover', () => btnScatter.setAlpha(1.5));
-        txtScatter.on('pointerout',  () => btnScatter.setAlpha(1));
+        txtScatter.on('pointerup', () => {
+          drawBtn(btnScatter, sX, bY, level.color, true, false);
+        });
 
-        // Back to Menu button
+        // 3. BACK TO MENU Button
+        const mX = W / 2 + 140;
+        const menuColor = 0xff00aa;
         const btnMenu = this.add.graphics();
-        btnMenu.fillStyle(0x1a1a2e, 0.8);
-        btnMenu.lineStyle(1.5, 0xff00aa, 0.8);
-        btnMenu.fillRoundedRect(bX + 170, bY - 18, 90, 32, 6);
-        btnMenu.strokeRoundedRect(bX + 170, bY - 18, 90, 32, 6);
-        const txtMenu = this.add.text(bX + 215, bY, '⌂ MENU', {
-          fontFamily: 'Orbitron, sans-serif', fontSize: '10px', color: '#ff00aa', fontStyle: 'bold',
+        drawBtn(btnMenu, mX, bY, menuColor, false, false);
+
+        const txtMenu = this.add.text(mX, bY, '⌂ MENU', {
+          fontFamily: 'Orbitron, sans-serif', fontSize: '10.5px', color: '#ffffff', fontStyle: 'bold',
         }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
 
+        txtMenu.on('pointerover', () => {
+          drawBtn(btnMenu, mX, bY, menuColor, true, false);
+          txtMenu.setColor(`#${menuColor.toString(16).padStart(6, '0')}`);
+        });
+        txtMenu.on('pointerout', () => {
+          drawBtn(btnMenu, mX, bY, menuColor, false, false);
+          txtMenu.setColor('#ffffff');
+        });
         txtMenu.on('pointerdown', () => {
+          drawBtn(btnMenu, mX, bY, menuColor, true, true);
           this.timerEvent?.remove();
           this.scene.start('JigsawMenu');
         });
-        txtMenu.on('pointerover', () => btnMenu.setAlpha(1.5));
-        txtMenu.on('pointerout',  () => btnMenu.setAlpha(1));
+        txtMenu.on('pointerup', () => {
+          drawBtn(btnMenu, mX, bY, menuColor, true, false);
+        });
 
         // Start countdown timer
         this.timerEvent = this.time.addEvent({
